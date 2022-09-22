@@ -28,27 +28,26 @@ public class RemoveCommand extends McmeEntitiesCommandHandler {
         commandNodeBuilder
                 .requires(sender -> (sender instanceof RealPlayer)
                         && ((RealPlayer) sender).getBukkitPlayer().hasPermission(Permission.USER.getNode()))
-                .executes(context -> removeEntity(context.getSource(),null))
+                .executes(context -> removeEntity(context.getSource(), null))
                 .then(HelpfulRequiredArgumentBuilder.argument("name", word())
-                        .executes(context -> removeEntity(context.getSource(),context.getArgument("name",String.class))));
+                        .executes(context -> removeEntity(context.getSource(), context.getArgument("name", String.class))));
         return commandNodeBuilder;
     }
 
-
     private int removeEntity(McmeCommandSender sender, String name) {
         Collection<? extends McmeEntity> entities = new HashSet<>();
-        if(name !=null && name.equalsIgnoreCase("all")) {
+        if (name != null && name.equalsIgnoreCase("all")) {
             entities = EntitiesPlugin.getEntityServer().getEntities(VirtualEntity.class);
-        } else if(name != null) {
+        } else if (name != null) {
             McmeEntity entity = (EntityAPI.getEntity(name));
-            if(entity != null) {
+            if (entity != null) {
                 entities = Collections.singleton(entity);
             }
         } else {
-            entities =  ((BukkitCommandSender) sender).getSelectedEntities();
+            entities = ((BukkitCommandSender) sender).getSelectedEntities();
         }
         EntityAPI.removeEntity(entities);
-        sender.sendMessage(new ComponentBuilder(entities.size()+" entities removed.").create());
+        sender.sendMessage(new ComponentBuilder(entities.size() + " entities removed.").create());
         return 0;
     }
 

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 public class SpeechBalloonLayout {
 
@@ -55,30 +54,25 @@ public class SpeechBalloonLayout {
             balloonMaterial = Material.WHITE_STAINED_GLASS;
         }
         linePrefix = getConfig().getString("LinePrefix", "");
-        linePitch = getConfig().getDouble("LinePitch",0.26);
+        linePitch = getConfig().getDouble("LinePitch", 0.26);
         modelDataNarrow = getConfig().getIntegerList("CustomModelDataNarrow").toArray(new Integer[0]);
-        if(modelDataNarrow.length==0) {
+        if (modelDataNarrow.length == 0) {
             modelDataNarrow = new Integer[]{1, 2, 3, 4, 5};
         }
         modelDataWide = getConfig().getIntegerList("CustomModelDataWide").toArray(new Integer[0]);
-        if(modelDataWide.length==0) {
+        if (modelDataWide.length == 0) {
             modelDataWide = new Integer[]{6, 7, 8, 9, 10};
         }
         this.width = width;
-        switch(position) {
-            case LEFT:
-                baseOffset = ConfigurationUtil.getVector(getConfig(),"PositionLeft", new Vector(-1.5,0.2,0));
-                break;
-            case RIGHT:
-                baseOffset = ConfigurationUtil.getVector(getConfig(),"PositionRight", new Vector(1.5,0.2,0));
-                break;
-            case TOP:
-                baseOffset = ConfigurationUtil.getVector(getConfig(),"PositionTop", new Vector(0,1.2,0));
-                break;
+        switch (position) {
+            case LEFT ->
+                    baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionLeft", new Vector(-1.5, 0.2, 0));
+            case RIGHT ->
+                    baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionRight", new Vector(1.5, 0.2, 0));
+            case TOP -> baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionTop", new Vector(0, 1.2, 0));
         }
-//Logger.getGlobal().info("baseOffset: "+baseOffset.toString());
         layoutOffset = baseOffset;
-    };
+    }
 
     public void layout() {
         // for Width.OPTIMAL determine optimal width
@@ -143,21 +137,20 @@ public class SpeechBalloonLayout {
             lines = wrappedLines.toArray(new String[0]);
 //Logger.getGlobal().info("Wrapped "+lines.length);
             //add Line prefix
-            for(int i = 0; i < lines.length; i++) {
-                lines[i] = (linePrefix + lines[i]).replace('&','§');
+            for (int i = 0; i < lines.length; i++) {
+                lines[i] = (linePrefix + lines[i]).replace('&', '§');
             }
         }
         // set currentOffset to match amount of lines and width
-        layoutOffset = new Vector(0,0,baseOffset.getZ());
-        switch(position) {
-            case RIGHT:
-                layoutOffset.setX(baseOffset.getX()+(isWide?widthInBlocksWide/2:widthInBlocksNarrow/2)); break;
-            case LEFT:
-                layoutOffset.setX(baseOffset.getX()-(isWide?widthInBlocksWide/2:widthInBlocksNarrow/2)); break;
-            case TOP:
-                layoutOffset.setX(baseOffset.getX());
+        layoutOffset = new Vector(0, 0, baseOffset.getZ());
+        switch (position) {
+            case RIGHT ->
+                    layoutOffset.setX(baseOffset.getX() + (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
+            case LEFT ->
+                    layoutOffset.setX(baseOffset.getX() - (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
+            case TOP -> layoutOffset.setX(baseOffset.getX());
         }
-        layoutOffset.setY(baseOffset.getY()+linePitch*lines.length);
+        layoutOffset.setY(baseOffset.getY() + linePitch * lines.length);
     }
 
     private boolean canAdd(String wrappedLine, String append, int maxLength) {
@@ -214,7 +207,7 @@ public class SpeechBalloonLayout {
     }
 
     public SpeechBalloonLayout withJson(String[] jsonLines) {
-        this.lines = lines;
+        this.lines = jsonLines;
         isJson = true;
         return this;
     }
@@ -345,11 +338,11 @@ public class SpeechBalloonLayout {
     }
 
     public enum Position {
-        LEFT, RIGHT, TOP;
+        LEFT, RIGHT, TOP
     }
 
     public enum Width {
-        NARROW, WIDE, OPTIMAL;
+        NARROW, WIDE, OPTIMAL
     }
 
     private ConfigurationSection getConfig() {

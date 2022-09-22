@@ -25,8 +25,8 @@ public abstract class GoalVirtualEntity implements Goal {
 
     private final Set<HeadGoal> headGoals = new HashSet<>();
     private HeadGoal currentHeadGoal;
-    private int headGoalTicks=0;
-    private float currentDurationFactor=1;
+    private int headGoalTicks = 0;
+    private float currentDurationFactor = 1;
 
     protected final static Random random = new Random();
 
@@ -57,7 +57,7 @@ public abstract class GoalVirtualEntity implements Goal {
     @Override
     public void resetRotationFlags() {
         hasRotation = false;
-        if(currentHeadGoal!=null) {
+        if (currentHeadGoal != null) {
             currentHeadGoal.resetRotationFlags();
         }
     }
@@ -93,12 +93,12 @@ public abstract class GoalVirtualEntity implements Goal {
         this.roll = roll;
     }
 
-    public boolean hasHeadRotation(){
-        return currentHeadGoal!=null && currentHeadGoal.hasHeadRotation();
+    public boolean hasHeadRotation() {
+        return currentHeadGoal != null && currentHeadGoal.hasHeadRotation();
     }
 
     public float getHeadYaw() {
-        if(currentHeadGoal!=null) {
+        if (currentHeadGoal != null) {
             return currentHeadGoal.getHeadYaw();
         } else {
             return 0;
@@ -107,7 +107,7 @@ public abstract class GoalVirtualEntity implements Goal {
 
     @Override
     public float getHeadPitch() {
-        if(currentHeadGoal!=null) {
+        if (currentHeadGoal != null) {
 //Logger.getGlobal().info("Virtual goal head rotation: "+ currentHeadGoal.getHeadYaw()+" "+currentHeadGoal.getHeadPitch());
             return currentHeadGoal.getHeadPitch();
         } else {
@@ -116,15 +116,15 @@ public abstract class GoalVirtualEntity implements Goal {
     }
 
     @Override
-    public void update(){
-        if(currentHeadGoal==null || headGoals.size()>1 && headGoalTicks > currentHeadGoal.getDuration()*currentDurationFactor) {
+    public void update() {
+        if (currentHeadGoal == null || headGoals.size() > 1 && headGoalTicks > currentHeadGoal.getDuration() * currentDurationFactor) {
             setRandomHeadGoal();
         }
     }
 
     @Override
-    public void doTick(){
-        if(currentHeadGoal!=null) {
+    public void doTick() {
+        if (currentHeadGoal != null) {
             currentHeadGoal.doTick();
         }
         headGoalTicks++;
@@ -146,10 +146,10 @@ public abstract class GoalVirtualEntity implements Goal {
 
     public void removeHeadGoal(HeadGoal headGoal) {
         headGoals.remove(headGoal);
-        if(headGoals.isEmpty()) {
+        if (headGoals.isEmpty()) {
             EntitiesPlugin.getEntityServer().handleEvent(new HeadGoalChangedEvent(getEntity(), this, null));
             currentHeadGoal = null;
-        } else if(currentHeadGoal == headGoal){
+        } else if (currentHeadGoal == headGoal) {
             setRandomHeadGoal();
         }
     }
@@ -168,13 +168,14 @@ public abstract class GoalVirtualEntity implements Goal {
         return new HashSet<>(headGoals);
     }
 
-    public void setDefaultHeadGoal() {}
+    public void setDefaultHeadGoal() {
+    }
 
     private void setRandomHeadGoal() {
-        if(headGoals.size()>0) {
-            currentDurationFactor = new Random().nextFloat()+0.7f;
+        if (headGoals.size() > 0) {
+            currentDurationFactor = new Random().nextFloat() + 0.7f;
             HeadGoal nextHeadGoal = (HeadGoal) headGoals.toArray()[random.nextInt(headGoals.size())];
-            if(nextHeadGoal!=currentHeadGoal) {
+            if (nextHeadGoal != currentHeadGoal) {
                 EntitiesPlugin.getEntityServer().handleEvent(new HeadGoalChangedEvent(getEntity(), this, nextHeadGoal));
                 currentHeadGoal = nextHeadGoal;
             }
@@ -201,11 +202,11 @@ public abstract class GoalVirtualEntity implements Goal {
     }
 
     public void setFinished() {
-        if(!isFinished) {
+        if (!isFinished) {
             GoalFinishedEvent event = new GoalFinishedEvent(getEntity(), this);
             EntitiesPlugin.getEntityServer().handleEvent(event);
             isFinished = true;
-Logger.getGlobal().info("Set finished!");
+            Logger.getGlobal().info("Set finished!");
         }
     }
 
@@ -233,10 +234,12 @@ Logger.getGlobal().info("Set finished!");
     }
 
     @Override
-    public void activate() {}
+    public void activate() {
+    }
 
     @Override
-    public void deactivate() {}
+    public void deactivate() {
+    }
 
     public Vector getVelocity() {
         return new Vector(0, 0, 0);

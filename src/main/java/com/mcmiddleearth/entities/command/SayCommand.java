@@ -33,20 +33,8 @@ public class SayCommand extends McmeEntitiesCommandHandler {
     }
 
     private int say(McmeCommandSender sender, String side, String text, int duration) {
-        /*String[] words = text.split(" ");
-        List<String> lines = new ArrayList<>();
-        int i=0;
-        while(i<words.length) {
-            StringBuilder line = new StringBuilder(words[i]);
-            i++;
-            while (line.length() < 15 && i < words.length) {
-                line.append(" ").append(words[i]);
-                i++;
-            }
-            lines.add(line.toString());
-        }*/
         VirtualEntity entity = (VirtualEntity) ((RealPlayer) sender).getSelectedEntities().iterator().next();
-        //entity.say(lines.toArray(new String[0]), 200);
+
         SpeechBalloonLayout.Position position = (side.equals("l")? SpeechBalloonLayout.Position.LEFT:
                 (side.equals("t")? SpeechBalloonLayout.Position.TOP: SpeechBalloonLayout.Position.RIGHT));
         SpeechBalloonLayout layout = new SpeechBalloonLayout(position, SpeechBalloonLayout.Width.OPTIMAL)
@@ -55,7 +43,5 @@ public class SayCommand extends McmeEntitiesCommandHandler {
         entity.say(layout);
         return 0;
     }
-
-
 
 }

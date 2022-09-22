@@ -10,7 +10,6 @@ import com.mcmiddleearth.entities.ai.movement.MovementEngine;
 import com.mcmiddleearth.entities.api.*;
 import com.mcmiddleearth.entities.entities.attributes.VirtualAttributeFactory;
 import com.mcmiddleearth.entities.entities.composite.SpeechBalloonEntity;
-import com.mcmiddleearth.entities.entities.composite.WingedFlightEntity;
 import com.mcmiddleearth.entities.entities.composite.bones.SpeechBalloonLayout;
 import com.mcmiddleearth.entities.events.events.McmeEntityDamagedEvent;
 import com.mcmiddleearth.entities.events.events.McmeEntityDeathEvent;
@@ -24,6 +23,8 @@ import com.mcmiddleearth.entities.exception.InvalidLocationException;
 import com.mcmiddleearth.entities.inventory.McmeInventory;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import com.mcmiddleearth.entities.util.UuidGenerator;
+import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attributable;
 import org.bukkit.attribute.Attribute;
@@ -38,16 +39,16 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     private int viewDistance = 320;
 
-    private UUID uniqueId;
+    private final UUID uniqueId;
 
     private final String name;
     private String displayName;
+    private final Map<UUID, SpeechBalloonEntity> speechBallons = new HashMap<>();
 
     private final Set<Player> viewers = new HashSet<>();
 
@@ -107,13 +108,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     private int hurtCoolDown = 0;
 
     private Set<McmeEntity> enemies = new HashSet<>();
-
-    private final Map<Player, SpeechBalloonEntity> speechBallons = new HashMap<>();
+    private String triggeredSound;
     //private String[] speech;
     private boolean isTalking;
     private int speechCounter;
-
-    private SpeechBalloonLayout defaultSpeechBalloonLayout, currentSpeechBalloonLayout;
+    private SpeechBalloonLayout defaultSpeechBalloonLayout, currentSpeechBalloonLayout, subtitleLayout;
 
     private Vector mouth, sitPoint, saddle;
 
@@ -126,48 +125,41 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.location = factory.getLocation();
         this.headYaw = factory.getHeadYaw();
         this.headPitch = factory.getHeadPitch();
-        this.uniqueId = factory.getUniqueId();
-        if(uniqueId == null) {
-            this.uniqueId = UuidGenerator.fast_random();
-        }
-        this.name = (factory.getName()!=null?factory.getName():"unnamed");
+        this.uniqueId = Objects.requireNonNullElse(factory.getUniqueId(), UuidGenerator.fast_random());
+        this.name = (factory.getName() != null ? factory.getName() : "unnamed");
         this.attributes = factory.getAttributes();
-//AttributeInstance attackSpeed = getAttribute(Attribute.GENERIC_ATTACK_SPEED);
-//if(attackSpeed!=null) Logger.getGlobal().info("Attack speed: "+attackSpeed.getBaseValue()+" -> "+attackSpeed.getValue());
         this.displayName = factory.getDisplayName();
+        this.triggeredSound = factory.getTriggeredSound();
         this.useWhitelistAsBlacklist = factory.hasBlackList();
-        this.whiteList = (factory.getWhitelist()!=null?factory.getWhitelist():new HashSet<>());
+        this.whiteList = (factory.getWhitelist() != null ? factory.getWhitelist() : new HashSet<>());
         this.movementType = factory.getMovementType();
         this.boundingBox = factory.getBoundingBox();
         this.boundingBox.setLocation(location);
-//Logger.getGlobal().info("BB: "+boundingBox.getBoundingBox());
         this.movementEngine = new MovementEngine(this);
         this.health = factory.getHealth();
-        if(health<0) {
+        if (health < 0) {
             AttributeInstance maxHealth = getAttribute(Attribute.GENERIC_MAX_HEALTH);
-            if(maxHealth!=null) health = maxHealth.getValue();
+            if (maxHealth != null) health = maxHealth.getValue();
         }
         this.attackDelay = factory.getAttackDelay();
         this.defaultSpeechBalloonLayout = factory.getSpeechBalloonLayout();
+        this.subtitleLayout = factory.getSubtitleLayout();
         this.mouth = factory.getMouth();
         this.viewDistance = factory.getViewDistance();
         this.jumpHeight = factory.getJumpHeight();
         this.fallDepth = jumpHeight;
         this.knockBackBase = factory.getKnockBackBase();
         this.knockBackPerDamage = factory.getKnockBackPerDamage();
-        this.enemies = (factory.getEnemies()!=null?factory.getEnemies():new HashSet<>());
+        this.enemies = (factory.getEnemies() != null ? factory.getEnemies() : new HashSet<>());
         this.sitPoint = factory.getSitPoint();
-//Logger.getGlobal().info("SitPoint: "+sitPoint);
         this.saddle = factory.getSaddlePoint();
-//Logger.getGlobal().info("This location: "+this.getLocation());
-        if(factory.getGoalFactory()!=null) {
+        if (factory.getGoalFactory() != null) {
             this.goal = factory.getGoalFactory().build(this);
-            if(this.goal!=null) {
+            if (this.goal != null) {
                 this.goal.activate();
             }
         }
         dependingEntity = factory.getDependingEntity();
-//Logger.getGlobal().info("this goal: "+getGoal());
     }
 
     protected VirtualEntity(McmeEntityType type, Location location) {
@@ -176,7 +168,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.name = "unnamed";
         this.location = location;
         this.uniqueId = UuidGenerator.fast_random();//UuidGenerator.getRandomV2();
-        this.boundingBox = new EntityBoundingBox(0,0,0,0);
+        this.boundingBox = new EntityBoundingBox(0, 0, 0, 0);
         boundingBox.setLocation(location);
         this.movementEngine = null;
         this.whiteList = new HashSet<>();
@@ -184,68 +176,48 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void doTick() {
-//Logger.getGlobal().info("VirtualEntity: tick ");
-        if(teleported) {
+        if (teleported) {
             teleport();
-            if(goal!=null) {
+            if (goal != null) {
                 goal.update();
             }
         } else {
-            if(goal != null) {
+            if (goal != null) {
                 goal.doTick(); //tick before update to enable update do special stuff that doesn't get overridden by doTick
-                if(tickCounter%goal.getUpdateInterval()==goal.getUpdateRandom()) {
+                if (tickCounter % goal.getUpdateInterval() == goal.getUpdateRandom()) {
                     goal.update();
-//Logger.getGlobal().info("Goal update: "+ tickCounter +" "+ goal.getUpdateInterval() + " "+goal.getUpdateRandom());
-//Logger.getGlobal().info("Goal update: rotation: "+ goal.hasRotation());
                 }
-                /*switch(movementType) {
-                    case FLYING:
-                    case WALKING:
-                        goal.doTick();
-                }*/
                 setMovementSpeed(goal.getMovementSpeed());
-                if(goal.isDirectMovementControl()) {
+                if (goal.isDirectMovementControl()) {
                     velocity = goal.getVelocity();
                 } else {
                     movementEngine.calculateMovement(goal.getDirection());
-//Logger.getGlobal().info("Goal: "+goal.getType()+" direction: "+goal.getDirection()+" vel: "+velocity);
                 }
-                if(goal.hasRotation()) {
-//Logger.getGlobal().info("rotation: "+ goal.getRotation());
-                    setRotation(goal.getYaw(),goal.getPitch(),goal.getRoll());
+                if (goal.hasRotation()) {
+                    setRotation(goal.getYaw(), goal.getPitch(), goal.getRoll());
                 }
-                if(goal.hasHeadRotation()) {
-//Logger.getGlobal().info("Virtual Entity head rotation: "+ goal.getHeadYaw()+" "+goal.getHeadPitch());
+                if (goal.hasHeadRotation()) {
                     setHeadRotation(goal.getHeadYaw(), goal.getHeadPitch());
                 }
                 goal.resetRotationFlags();
             } else {
-                movementEngine.calculateMovement(new Vector(0,0,0));
+                movementEngine.calculateMovement(new Vector(0, 0, 0));
             }
             move();
             attackCoolDown = Math.max(0, --attackCoolDown);
             hurtCoolDown = Math.max(0, --hurtCoolDown);
-            /*if(attackCoolDown<30 && actionType.equals(ActionType.ATTACK)) {
-//Logger.getGlobal().info("unset attack");
-                actionType = ActionType.IDLE;
-            }
-            if(hurtCoolDown==0 && actionType.equals(ActionType.HURT)) {
-                actionType = ActionType.IDLE;
-            }*/
+
         }
         tickCounter++;
-//Logger.getGlobal().info("+");
-        if(isDead() && !isTerminated) {
-            //actionType = ActionType.DEATH;
+
+        if (isDead() && !isTerminated) {
             deathCounter++;
-            if(deathCounter>20) {
+            if (deathCounter > 20) {
                 terminate();
             }
         }
-//Logger.getGlobal().info("speechCounterr: "+speechCounter);
         speechCounter = Math.max(-1, --speechCounter);
-        if(speechCounter == 0) {
-//Logger.getGlobal().info("stop talking");
+        if (speechCounter == 0) {
             McmeEntityEvent event = new VirtualEntityStopTalkEvent(this);
             EntitiesPlugin.getEntityServer().handleEvent(event);
             isTalking = false;
@@ -273,7 +245,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 //if(!(this instanceof Projectile)) Logger.getGlobal().info("location new: "+ getLocation().getX()+" "+getLocation().getY()+" "+getLocation().getZ());
         boundingBox.setLocation(location);
 
-        if((tickCounter % updateInterval == updateRandom)) {
+        if ((tickCounter % updateInterval == updateRandom)) {
             teleportPacket.update();
             teleportPacket.send(viewers);
         } else {
@@ -344,7 +316,9 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     @Override
-    public float getHeadYaw() { return headYaw; }
+    public float getHeadYaw() {
+        return headYaw;
+    }
 
     @Override
     public UUID getUniqueId() {
@@ -368,10 +342,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void setGoal(Goal goal) {
-        if(goal instanceof GoalVirtualEntity && this.goal!=goal) {
+        if (goal instanceof GoalVirtualEntity && this.goal != goal) {
             GoalChangedEvent event = new GoalChangedEvent(this, this.goal, goal);
             EntitiesPlugin.getEntityServer().handleEvent(event);
-            if(!event.isCancelled()) {
+            if (!event.isCancelled()) {
                 this.goal.deactivate();
                 this.goal = (GoalVirtualEntity) goal;
                 this.goal.activate();
@@ -406,7 +380,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public void setMovementType(MovementType movementType) {
-        if(!this.movementType.equals(MovementType.FALL)
+        if (!this.movementType.equals(MovementType.FALL)
                 && movementType.equals(MovementType.FALL)) {
             movementEngine.setFallStart(boundingBox.getMin().getY());
         }
@@ -460,28 +434,24 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public synchronized void addViewer(Player player) {
-        if(!player.hasPermission(Permission.VIEWER.getNode())) return;
-        if(!useWhitelistAsBlacklist && !(whiteList.isEmpty() || whiteList.contains(player.getUniqueId()))
+        if (!player.hasPermission(Permission.VIEWER.getNode())) return;
+        if (!useWhitelistAsBlacklist && !(whiteList.isEmpty() || whiteList.contains(player.getUniqueId()))
                 || useWhitelistAsBlacklist && whiteList.contains(player.getUniqueId())) {
             return;
         }
         spawnPacket.send(player);
         viewers.add(player);
-        if(isTalking) {
+        if (isTalking) {
             createSpeechBalloon(player);
         }
     }
 
     public synchronized void removeViewer(Player player) {
-        SpeechBalloonEntity balloon = speechBallons.get(player);
-        if(balloon != null) {
-//Logger.getGlobal().info("REmove ballon!"+this.getClass().getSimpleName());
-            //balloon.removeAllViewers();
+        SpeechBalloonEntity balloon = speechBallons.get(player.getUniqueId());
+        if (balloon != null) {
             balloon.terminate();
-            speechBallons.remove(player);
-            //EntitiesPlugin.getEntityServer().removeEntity(balloon);
+            speechBallons.remove(player.getUniqueId());
         }
-//Logger.getGlobal().info("REmove entity!"+this.getClass().getSimpleName());
         removePacket.send(player);
         viewers.remove(player);
     }
@@ -512,13 +482,13 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     public double getJumpHeight() {
         AttributeInstance instance = getAttribute(Attribute.HORSE_JUMP_STRENGTH);
-        return jumpHeight+(instance!=null?instance.getValue():0);
+        return jumpHeight + (instance != null ? instance.getValue() : 0);
         //return jumpHeight;
     }
 
     public double getFlyingSpeed() {
         AttributeInstance instance = getAttribute(Attribute.GENERIC_FLYING_SPEED);
-        if(instance == null) {
+        if (instance == null) {
             return getGenericSpeed();
         }
 //Logger.getGlobal().info("Flyspeed: "+instance);
@@ -528,19 +498,21 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     public double getGenericSpeed() {
         AttributeInstance instance = getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
 //Logger.getGlobal().info("Using generic: "+instance);
-        return (instance!=null?instance.getValue():0.1);
+        return (instance != null ? instance.getValue() : 0.1);
     }
 
     public int getFallDepth() {
         return fallDepth;
     }
 
-    public double getHealth() { return health;}
+    public double getHealth() {
+        return health;
+    }
 
     public void damage(double damage) {
         McmeEntityDamagedEvent event = new McmeEntityDamagedEvent(this, damage);
         EntitiesPlugin.getEntityServer().handleEvent(event);
-        if(!event.isCancelled()) {
+        if (!event.isCancelled()) {
             health -= event.getDamage();
 //Logger.getGlobal().info("Damage: "+damage+" Health: "+health);
             if (health <= 0) {
@@ -557,7 +529,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     public void heal(double damage) {
         double maxHealth = 20;
         AttributeInstance attrib = getAttribute(Attribute.GENERIC_MAX_HEALTH);
-        if(attrib!=null) maxHealth = attrib.getValue();
+        if (attrib != null) maxHealth = attrib.getValue();
         health = Math.min(health + damage, maxHealth);
     }
 
@@ -569,43 +541,43 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     public void receiveAttack(McmeEntity damager, double damage, double knockBackFactor) {
         double defense = 0;
         AttributeInstance attribute = getAttribute(Attribute.GENERIC_ARMOR);
-        if(attribute!=null) defense = attribute.getValue();
+        if (attribute != null) defense = attribute.getValue();
         double toughness = 0;
         attribute = getAttribute(Attribute.GENERIC_ARMOR_TOUGHNESS);
-        if(attribute!=null) toughness = attribute.getValue();
-        damage(damage*(1-Math.min(20,Math.max(defense/5,defense - 4*damage/(toughness+8)))/25));
+        if (attribute != null) toughness = attribute.getValue();
+        damage(damage * (1 - Math.min(20, Math.max(defense / 5, defense - 4 * damage / (toughness + 8))) / 25));
         attribute = getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE);
         double resistance = 0;
-        if(attribute!=null) resistance = attribute.getValue();
-        double length = knockBackFactor * (knockBackBase+Math.max(0,damage-resistance)*knockBackPerDamage);
+        if (attribute != null) resistance = attribute.getValue();
+        double length = knockBackFactor * (knockBackBase + Math.max(0, damage - resistance) * knockBackPerDamage);
 //Logger.getGlobal().info("Kb base: "+knockBackBase+" per Damage: "+knockBackPerDamage+" resistance: "+resistance+" factor: "+knockBackFactor+" length: "+length);
         Vector normal;
-        if(damager!=null) {
+        if (damager != null) {
             normal = damager.getLocation().clone().subtract(location.toVector()).toVector().normalize();
         } else {
-            normal = new Vector(0,1,0);
+            normal = new Vector(0, 1, 0);
         }
-        Vector knockBack = normal.multiply(-length).add(new Vector(0,length*2,0));
-        if(isOnGround()) {
+        Vector knockBack = normal.multiply(-length).add(new Vector(0, length * 2, 0));
+        if (isOnGround()) {
             setMovementType(MovementType.FALL);
         }
         //actionType = ActionType.HURT;
         hurtCoolDown = 10;
 //Logger.getGlobal().info("Set Velocity: "+ knockBack.getX()+" "+knockBack.getY()+" "+knockBack.getZ());
         setVelocity(knockBack);
-        if(damager!=null) {
+        if (damager != null) {
             enemies.add(damager);
         }
     }
 
     @Override
     public void attack(McmeEntity target) {
-        attack(target,true);
+        attack(target, true);
     }
 
     public void attack(McmeEntity target, boolean animate) {
 //Logger.getGlobal().info("Att cool: "+attackCoolDown);
-        if(attackCoolDown==0 && hurtCoolDown == 0) {
+        if (attackCoolDown == 0 && hurtCoolDown == 0) {
             VirtualEntityAttackEvent event = new VirtualEntityAttackEvent(this, target);
             EntitiesPlugin.getEntityServer().handleEvent(event);
             if (!event.isCancelled()) {
@@ -614,7 +586,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 VirtualEntity damager = this;
                 Payload attack = new Payload() {
                     public void execute() {
-                        if(isCloseToTarget(target, GoalDistance.ATTACK*3)) {
+                        if (isCloseToTarget(target, GoalDistance.ATTACK * 3)) {
                             AttributeInstance attribute = getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
                             double damage = 2;
                             if (attribute != null) damage = attribute.getValue();
@@ -625,7 +597,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                         }
                     }
                 };
-                if(animate) {
+                if (animate) {
                     playAnimation(ActionType.ATTACK, attack, attackDelay);
                 } else {
                     attack.execute();
@@ -633,12 +605,12 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             }
             attackCoolDown = 40;
             AttributeInstance attribute = getAttribute(Attribute.GENERIC_ATTACK_SPEED);
-            if(attribute!=null) attackCoolDown = (int) (160 / attribute.getValue());
+            if (attribute != null) attackCoolDown = (int) (160 / attribute.getValue());
         }
     }
 
     private boolean isCloseToTarget(McmeEntity target, double distanceSquared) {
-        if(target!=null) {
+        if (target != null) {
             double distance = getLocation().toVector().distanceSquared(target.getLocation().toVector());
             return distance < distanceSquared;
         } else {
@@ -647,26 +619,26 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public void shoot(McmeEntity target, McmeEntityType projectile) {
-        if(projectile.isProjectile()
+        if (projectile.isProjectile()
                 && target.getLocation().getWorld().equals(getLocation().getWorld())
                 && attackCoolDown == 0 && hurtCoolDown == 0) {
             AttributeInstance attribute = getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
             float damage = 2;
-            if(attribute!= null) damage = (float) attribute.getValue();
+            if (attribute != null) damage = (float) attribute.getValue();
             double knockback = 1;
             attribute = getAttribute(Attribute.GENERIC_ATTACK_KNOCKBACK);
-            if(attribute!=null) knockback = attribute.getValue();
-            VirtualEntityFactory factory = new VirtualEntityFactory(projectile, getLocation().clone().add(-0.4,1.4,0))
-                        .withShooter(this)
-                        .withProjectileDamage(damage)
-                        .withKnockBackBase((float)knockback)
-                        .withKnockBackPerDamage(0);
+            if (attribute != null) knockback = attribute.getValue();
+            VirtualEntityFactory factory = new VirtualEntityFactory(projectile, getLocation().clone().add(-0.4, 1.4, 0))
+                    .withShooter(this)
+                    .withProjectileDamage(damage)
+                    .withKnockBackBase((float) knockback)
+                    .withKnockBackPerDamage(0);
             Projectile.takeAim(factory, target.getLocation());
             try {
                 EntityAPI.spawnEntity(factory);
                 attackCoolDown = 40;
                 attribute = getAttribute(Attribute.GENERIC_ATTACK_SPEED);
-                if(attribute!=null) attackCoolDown = (int) (20 / attribute.getValue());
+                if (attribute != null) attackCoolDown = (int) (20 / attribute.getValue());
             } catch (InvalidLocationException | InvalidDataException e) {
                 e.printStackTrace();
             }
@@ -696,10 +668,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     @Override
-    public  void finalise() {
+    public void finalise() {
         removeSpeechBalloons();
-        if(goal!=null) goal.deactivate();
-        if(dependingEntity != null) dependingEntity.remove();
+        if (goal != null) goal.deactivate();
+        if (dependingEntity != null) dependingEntity.remove();
     }
 
     public Entity getDependingEntity() {
@@ -708,15 +680,12 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void playAnimation(ActionType type) {
-        this.playAnimation(type, new Payload() {
-            @Override
-            public void execute() {
-
-            }
-        },0);
+        this.playAnimation(type, () -> {
+        }, 0);
     }
 
-    public void playAnimation(ActionType type, Payload payload, int delay) { }
+    public void playAnimation(ActionType type, Payload payload, int delay) {
+    }
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
@@ -724,6 +693,22 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getTriggeredSound() {
+        return triggeredSound;
+    }
+
+    public void setTriggeredSound(String triggeredSound) {
+        this.triggeredSound = triggeredSound;
+    }
+
+    public SpeechBalloonLayout getSubtitleLayout() {
+        return subtitleLayout;
+    }
+
+    public void setSubtitleLayout(SpeechBalloonLayout subtitleLayout) {
+        this.subtitleLayout = subtitleLayout;
     }
 
     public void say(String message, int duration) {
@@ -754,17 +739,47 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         }
     }
 
+    public void saySubtitles(Player player) {
+        VirtualEntityTalkEvent event = new VirtualEntityTalkEvent(this, subtitleLayout);
+        EntitiesPlugin.getEntityServer().handleEvent(event);
+        if (event.isCancelled()) return;
+        SpeechBalloonEntity speechBalloonEntity = speechBallons.remove(player.getUniqueId());
+        if (speechBalloonEntity != null) {
+            speechBalloonEntity.terminate();
+        }
+
+        isTalking = true;
+        speechCounter = subtitleLayout.getDuration();
+        currentSpeechBalloonLayout = subtitleLayout;
+        createSpeechBalloon(player);
+
+        String line = ChatColor.translateAlternateColorCodes('&', subtitleLayout.getLines()[0]);
+        BukkitRunnable bukkitRunnable = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (speechCounter <= 0) {
+                    player.sendActionBar(Component.empty());
+                    this.cancel();
+                }
+
+                player.sendActionBar(line);
+            }
+        };
+
+        bukkitRunnable.runTaskTimer(EntitiesPlugin.getInstance(), 2L, 2L);
+    }
+
     private void createSpeechBalloon(Player viewer) {
         try {
             SpeechBalloonEntity balloon = EntitiesPlugin.getEntityServer().spawnSpeechBalloon(this, viewer, currentSpeechBalloonLayout);
-            speechBallons.put(viewer,balloon);
+            speechBallons.put(viewer.getUniqueId(), balloon);
         } catch (InvalidLocationException e) {
             e.printStackTrace();
         }
     }
 
     private void removeSpeechBalloons() {
-        speechBallons.forEach((player, balloon) -> balloon.terminate());
+        speechBallons.forEach((uniqueId, balloon) -> balloon.terminate());
         speechBallons.clear();
     }
 
@@ -848,9 +863,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public VirtualEntityFactory getFactory() {
-        VirtualEntityFactory factory = new VirtualEntityFactory(type,location, useWhitelistAsBlacklist,uniqueId,name,attributes)
+        VirtualEntityFactory factory = new VirtualEntityFactory(type, location, useWhitelistAsBlacklist, uniqueId, name, attributes)
                 .withBoundingBox(boundingBox)
                 .withDisplayName(displayName)
+                .withTriggeredSound(triggeredSound)
                 .withMovementType(movementType)
                 .withViewDistance(viewDistance)
                 .withHealth(health)
@@ -864,10 +880,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 .withAttributes(attributes)
                 .withEnemies(enemies)
                 .withSpeechBalloonLayout(defaultSpeechBalloonLayout)
+                .withSubtitleLayout(subtitleLayout)
                 .withSitPoint(sitPoint)
                 .withSaddlePoint(saddle)
                 .withAttackDelay(attackDelay);
-        if(goal!=null) {
+        if (goal != null) {
             factory.withGoalFactory(goal.getFactory());
         }
         return factory;

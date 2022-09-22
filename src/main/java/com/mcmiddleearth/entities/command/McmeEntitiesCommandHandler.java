@@ -12,8 +12,6 @@ import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.RealPlayer;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -23,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public abstract class McmeEntitiesCommandHandler extends AbstractCommandHandler implements TabExecutor {
 
@@ -39,40 +36,36 @@ public abstract class McmeEntitiesCommandHandler extends AbstractCommandHandler 
 //Logger.getGlobal().info("Factory: "+factory);
 //Logger.getGlobal().info("Factory movement type: "+factory.getMovementType().name());
         McmeEntityType entityType = McmeEntityType.valueOf(type);
-        if(entityType !=null)
-        {
+        if (entityType != null) {
             factory.withEntityType(entityType);
         }
-        if(name !=null)
-        {
+        if (name != null) {
             factory.withName(name);
         }
-        if(dataFile!=null && !dataFile.equals("")) {
+        if (dataFile != null && !dataFile.equals("")) {
             factory.withDataFile(dataFile);
         }
-        if(factory.getLocation()==null)
-        {
+        if (factory.getLocation() == null) {
             factory.withEntityForSpawnLocation(player);
         }
-        if(goal !=null)
-        {
+        if (goal != null) {
             getOrCreateGoalFactory(factory);
             try {
                 factory.getGoalFactory().withGoalType(GoalType.valueOf(goal.toUpperCase()));
-            } catch (IllegalArgumentException ignore) { }
-            if(factory.getGoalFactory().getTargetLocation()==null) {
-                factory.getGoalFactory().withTargetLocation(player.getSelectedPoints().stream()
-                                           .findFirst().orElse(player.getLocation()));
+            } catch (IllegalArgumentException ignore) {
             }
-            if(player.getSelectedTargetEntity()!=null)
-            {
+            if (factory.getGoalFactory().getTargetLocation() == null) {
+                factory.getGoalFactory().withTargetLocation(player.getSelectedPoints().stream()
+                        .findFirst().orElse(player.getLocation()));
+            }
+            if (player.getSelectedTargetEntity() != null) {
                 factory.getGoalFactory().withTargetEntity(player.getSelectedTargetEntity());
             }
-            if(factory.getGoalFactory().getTargetEntity() == null) {
+            if (factory.getGoalFactory().getTargetEntity() == null) {
                 factory.getGoalFactory().withTargetEntity(player);
             }
-    //Logger.getGlobal().info("Factory tar type: "+factory.getTargetEntity());
-            if(player.getSelectedPoints() != null && player.getSelectedPoints().size()>0) {
+
+            if (player.getSelectedPoints() != null && player.getSelectedPoints().size() > 0) {
                 factory.getGoalFactory().withCheckpoints(player.getSelectedPoints().toArray(new Location[0]));
             }
         }
@@ -80,19 +73,19 @@ public abstract class McmeEntitiesCommandHandler extends AbstractCommandHandler 
     }
 
     protected VirtualEntityGoalFactory getOrCreateGoalFactory(VirtualEntityFactory factory) {
-        if(factory.getGoalFactory()==null) {
+        if (factory.getGoalFactory() == null) {
             factory.withGoalFactory(new VirtualEntityGoalFactory(GoalType.HOLD_POSITION));
         }
         return factory.getGoalFactory();
     }
 
     protected Vector parseVector(Player player, String value) throws IllegalArgumentException {
-        if(value.equalsIgnoreCase("@p")) {
+        if (value.equalsIgnoreCase("@p")) {
             return player.getLocation().toVector().clone();
         }
         String[] split = value.split(" ");
-        if(split.length != 3) throw new IllegalArgumentException();
-        return new Vector(Double.parseDouble(split[0]),Double.parseDouble(split[1]),Double.parseDouble(split[2]));
+        if (split.length != 3) throw new IllegalArgumentException();
+        return new Vector(Double.parseDouble(split[0]), Double.parseDouble(split[1]), Double.parseDouble(split[2]));
     }
 
     protected Location parseLocation(Player player, String value) throws IllegalArgumentException {
@@ -111,7 +104,7 @@ public abstract class McmeEntitiesCommandHandler extends AbstractCommandHandler 
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
 //Logger.getGlobal().info("tabComplete 1");
         TabCompleteRequest request = new SimpleTabCompleteRequest(EntitiesPlugin.wrapCommandSender(sender),
-                                                                  String.format("/%s %s", alias, Joiner.on(' ').join(args)));
+                String.format("/%s %s", alias, Joiner.on(' ').join(args)));
         onTabComplete(request);
 //Logger.getGlobal().info("tabComplete 1");
         return request.getSuggestions();

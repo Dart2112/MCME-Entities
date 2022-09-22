@@ -24,9 +24,11 @@ public class SimplePlayerSpawnPacket extends AbstractPacket {
         this.player = player;
         info = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
         info.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
-        WrappedGameProfile profile = new WrappedGameProfile(player.getUniqueId(), (player.getName()!=null?player.getName():" "));
-        WrappedChatComponent displayName = WrappedChatComponent.fromText("*"+player.getDisplayName()+"*");
+
+        WrappedGameProfile profile = new WrappedGameProfile(player.getUniqueId(), player.getName());
+        WrappedChatComponent displayName = WrappedChatComponent.fromText("*" + player.getDisplayName() + "*");
         PlayerInfoData data = new PlayerInfoData(profile, 0, EnumWrappers.NativeGameMode.SURVIVAL, displayName);
+
         info.getPlayerInfoDataLists().write(0, Collections.singletonList(data));
         send(info, player.getViewers());
 
@@ -44,13 +46,12 @@ public class SimplePlayerSpawnPacket extends AbstractPacket {
                 .write(1, loc.getY())
                 .write(2, loc.getZ());
         spawn.getBytes()
-                .write(0, (byte)(loc.getYaw()*256/360))
-                .write(1, (byte) (loc.getPitch()*256/360));
+                .write(0, (byte) (loc.getYaw() * 256 / 360))
+                .write(1, (byte) (loc.getPitch() * 256 / 360));
     }
 
     @Override
     public void send(Player recipient) {
-//Logger.getGlobal().info("send player spawn to : "+recipient.getName());
         send(info, recipient);
         send(spawn, recipient);
     }

@@ -11,10 +11,6 @@ import com.mcmiddleearth.entities.entities.Placeholder;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.entities.composite.WingedFlightEntity;
 import com.mcmiddleearth.entities.events.events.goal.GoalEntityTargetChangedEvent;
-import org.bukkit.Location;
-import org.bukkit.util.Vector;
-
-import java.util.logging.Logger;
 
 public abstract class GoalEntityTarget extends GoalPath {
 
@@ -26,7 +22,7 @@ public abstract class GoalEntityTarget extends GoalPath {
     public GoalEntityTarget(VirtualEntity entity, VirtualEntityGoalFactory factory, Pathfinder pathfinder) {
         super(entity, factory, pathfinder);
         this.target = factory.getTargetEntity();
-        if(this.target instanceof Placeholder) {
+        if (this.target instanceof Placeholder) {
             targetIncomplete = true;
         }
         setDefaultHeadGoal();
@@ -44,23 +40,23 @@ public abstract class GoalEntityTarget extends GoalPath {
 
     @Override
     public void update() {
-        if(!targetIncomplete) {
+        if (!targetIncomplete) {
             if (!target.isOnline()) {
                 targetIncomplete = true;
             } else {
-                if(target.isDead()) setFinished();
+                if (target.isDead()) setFinished();
             }
         }
-        if(targetIncomplete) {
+        if (targetIncomplete) {
 //Logger.getGlobal().info("Incomplete, searching for: "+target.getUniqueId());
             McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(target.getUniqueId());
 //Logger.getGlobal().info("Completition: "+search);
-            if(search != null) {
+            if (search != null) {
                 target = search;
                 targetIncomplete = false;
             }
         }
-        if(target!=null && !targetIncomplete) {
+        if (target != null && !targetIncomplete) {
             setPathTarget(getTarget().getLocation().toVector());
         } else {
             setPathTarget(null);
@@ -89,12 +85,12 @@ public abstract class GoalEntityTarget extends GoalPath {
     }
 
     public void setTarget(McmeEntity target) {
-        if(this.target != target) {
-            GoalEntityTargetChangedEvent event = new GoalEntityTargetChangedEvent(getEntity(),this,target);
+        if (this.target != target) {
+            GoalEntityTargetChangedEvent event = new GoalEntityTargetChangedEvent(getEntity(), this, target);
             EntitiesPlugin.getEntityServer().handleEvent(event);
-            if(!event.isCancelled()) {
+            if (!event.isCancelled()) {
                 this.target = event.getNextTarget();
-                if(this.target instanceof Placeholder) {
+                if (this.target instanceof Placeholder) {
                     targetIncomplete = true;
                 }
             }
@@ -109,12 +105,12 @@ public abstract class GoalEntityTarget extends GoalPath {
     }*/
 
     public boolean isCloseToTarget(double distanceSquared) {
-        if(target!=null) {
+        if (target != null) {
             double distance = getEntity().getLocation().toVector().distanceSquared(getTarget().getLocation().toVector());
-            if((getEntity() instanceof  WingedFlightEntity)
+            if ((getEntity() instanceof WingedFlightEntity)
                     && (getEntity().getMovementType().equals(MovementType.FLYING)
-                        || getEntity().getMovementType().equals(MovementType.GLIDING))) {
-                return distance < (distanceSquared*400);
+                    || getEntity().getMovementType().equals(MovementType.GLIDING))) {
+                return distance < (distanceSquared * 400);
             } else {
                 return distance < distanceSquared;
             }

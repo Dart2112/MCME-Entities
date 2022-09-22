@@ -36,45 +36,42 @@ public class AnimateCommand extends McmeEntitiesCommandHandler {
 
 
     private int applyAnimationFrame(McmeCommandSender sender, String animation, int frameId) {
-//Logger.getGlobal().info("Apply Frame command");
-        RealPlayer player = ((RealPlayer)sender);
+        RealPlayer player = ((RealPlayer) sender);
         int counter = 0;
-        for(McmeEntity entity :player.getSelectedEntities()) {
-//Logger.getGlobal().info("entity: "+entity.getClass().getSimpleName());
+        for (McmeEntity entity : player.getSelectedEntities()) {
             if (entity instanceof BakedAnimationEntity) {
                 ((BakedAnimationEntity) entity).setManualAnimationControl(true);
-                ((BakedAnimationEntity) entity).setAnimationFrame(animation,frameId);
+                ((BakedAnimationEntity) entity).setAnimationFrame(animation, frameId);
                 counter++;
             }
         }
-        sender.sendMessage(new ComponentBuilder("Displaying frame "+frameId+" of animation "+animation+" for "
-                                                     +counter+" entities.").create());
+        sender.sendMessage(new ComponentBuilder("Displaying frame " + frameId + " of animation " + animation + " for "
+                + counter + " entities.").create());
         return 0;
     }
 
     private int animateEntity(McmeCommandSender sender, String animationId) {
-        RealPlayer player = ((RealPlayer)sender);
+        RealPlayer player = ((RealPlayer) sender);
         player.getSelectedEntities().forEach(entity -> {
             if (entity instanceof BakedAnimationEntity) {
-                if(animationId.equals("auto")) {
+                if (animationId.equals("auto")) {
                     ((BakedAnimationEntity) entity).setManualAnimationControl(false);
-                } else if(animationId.equals("manual")) {
-                        ((BakedAnimationEntity)entity).setManualAnimationControl(true);
+                } else if (animationId.equals("manual")) {
+                    ((BakedAnimationEntity) entity).setManualAnimationControl(true);
                 } else {
-                    //((BakedAnimationEntity) entity).setManualAnimationControl(true);
-                    ((BakedAnimationEntity) entity).setAnimation(animationId, true, null,0);
+                    ((BakedAnimationEntity) entity).setAnimation(animationId, true, null, 0);
                 }
             }
         });
-        if(animationId.equals("auto")) {
+        if (animationId.equals("auto")) {
             sender.sendMessage(new ComponentBuilder("Setting automated animation mode." + " for "
                     + player.getSelectedEntities().size() + " entities.").create());
-        } else if(animationId.equals("manual")) {
-                sender.sendMessage(new ComponentBuilder("Setting manual animation mode."+" for "
-                        +player.getSelectedEntities().size()+" entities.").create());
+        } else if (animationId.equals("manual")) {
+            sender.sendMessage(new ComponentBuilder("Setting manual animation mode." + " for "
+                    + player.getSelectedEntities().size() + " entities.").create());
         } else {
-            sender.sendMessage(new ComponentBuilder("Playing animation " + animationId+" for "
-                    +player.getSelectedEntities().size()+" entities.").create());
+            sender.sendMessage(new ComponentBuilder("Playing animation " + animationId + " for "
+                    + player.getSelectedEntities().size() + " entities.").create());
         }
         return 0;
     }

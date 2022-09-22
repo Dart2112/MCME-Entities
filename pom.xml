@@ -70,15 +70,8 @@
             <url>https://repo.dmulloy2.net/repository/public/</url>
         </repository>
         <repository>
-            <id>sk89q-snapshots</id>
-            <url>https://maven.sk89q.com/artifactory/repo</url>
-            <releases>
-                <enabled>true</enabled> <!-- releases enabled: this specific repository also hosts release versions -->
-            </releases>
-            <snapshots>
-                <enabled>true
-                </enabled> <!-- snapshots enabled: we declare a SNAPSHOT repository because we need to download a SNAPSHOT dependency -->
-            </snapshots>
+            <id>engine-hub</id>
+            <url>https://maven.enginehub.org/repo/</url>
         </repository>
     </repositories>
 
@@ -110,11 +103,17 @@
             <artifactId>worldedit-bukkit</artifactId>
             <version>7.0.0</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bstats</groupId>
+                    <artifactId>bstats-bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
-            <version>3.0</version>
+            <version>3.6.1</version>
         </dependency>
     </dependencies>
 </project>

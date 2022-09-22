@@ -15,9 +15,9 @@ public class AnimationJob {
     }
 
     public void doTick() {
-        if(animation!=null) {
+        if (animation != null) {
             animation.doTick();
-            if(payload !=null && animation.getCurrentFrame()==delay) {
+            if (payload != null && animation.getCurrentFrame() == delay) {
                 payload.execute();
             }
         }

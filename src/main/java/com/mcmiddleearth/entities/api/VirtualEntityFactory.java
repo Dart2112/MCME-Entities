@@ -37,9 +37,9 @@ public class VirtualEntityFactory {
 
     private UUID uniqueId = null;
 
-    private String name = "", dataFile = "", displayName = null;
+    private String name = "", dataFile = "", displayName = null, triggeredSound = null;
 
-    private Vector displayNamePosition = new Vector(0,0,0);
+    private Vector displayNamePosition = new Vector(0, 0, 0);
 
     private Location location;
 
@@ -59,11 +59,11 @@ public class VirtualEntityFactory {
 
     private VirtualEntityGoalFactory goalFactory = null;
 
-    private Vector headPitchCenter = new Vector(0,0.1,-0.03);
+    private Vector headPitchCenter = new Vector(0, 0.1, -0.03);
 
-    private SpeechBalloonLayout speechBalloonLayout = new SpeechBalloonLayout();
+    private SpeechBalloonLayout speechBalloonLayout = new SpeechBalloonLayout(), subtitleLayout = null;
 
-    private Vector mouth = new Vector(0,1.7,0);
+    private Vector mouth = new Vector(0, 1.7, 0);
 
     private boolean manualAnimationControl = false;
 
@@ -86,11 +86,11 @@ public class VirtualEntityFactory {
 
     private Set<McmeEntity> enemies = null;
 
-    private Vector attackPoint = new Vector(0,1,0);
+    private Vector attackPoint = new Vector(0, 1, 0);
 
-    private Vector saddlePoint = new Vector(0,1.4,0);
+    private Vector saddlePoint = new Vector(0, 1.4, 0);
 
-    private Vector sitPoint = new Vector (0,1,0);
+    private Vector sitPoint = new Vector(0, 1, 0);
 
     private boolean writeDefaultValuesToFile = false;
 
@@ -109,7 +109,7 @@ public class VirtualEntityFactory {
     }
 
     public VirtualEntityFactory(McmeEntityType type, Location location, boolean invertWhitelist,
-                                 UUID uniqueId, String name, Map<Attribute, AttributeInstance> attributes) {
+                                UUID uniqueId, String name, Map<Attribute, AttributeInstance> attributes) {
         this.type = type;
         this.location = location;
         this.useWhitelistAsBlacklist = invertWhitelist;
@@ -119,12 +119,12 @@ public class VirtualEntityFactory {
     }
 
     public static Collection<String> availableProperties() {
-        return Stream.of("type","blacklist","uniqueId", "name", "dataFile", "displayName","displayNamePosition",
-                "location","movementType","goalType","targetLocation","targetEntity","headPitchCenter",
-                "speechballoonlayout","mouth","manualanimation","headposedelay","viewdistance",
-                "maxrotationstep", "maxRotationStepFlight", "updateInterval", "jumpheight", "knockbackbase",
-                "knockbackperdamage","relative_position","saddlepoint","sitpoint","attackpoint",
-                "flightlevel","dive","attackpitch","saddle","color","style","attackdelay").map(String::toLowerCase)
+        return Stream.of("type", "blacklist", "uniqueId", "name", "dataFile", "displayName", "displayNamePosition",
+                        "location", "movementType", "goalType", "targetLocation", "targetEntity", "headPitchCenter",
+                        "speechballoonlayout", "mouth", "manualanimation", "headposedelay", "viewdistance",
+                        "maxrotationstep", "maxRotationStepFlight", "updateInterval", "jumpheight", "knockbackbase",
+                        "knockbackperdamage", "relative_position", "saddlepoint", "sitpoint", "attackpoint",
+                        "flightlevel", "dive", "attackpitch", "saddle", "color", "style", "attackdelay").map(String::toLowerCase)
                 .sorted().collect(Collectors.toList());
     }
 
@@ -143,6 +143,11 @@ public class VirtualEntityFactory {
         return this;
     }
 
+    public static VirtualEntityFactory getDefaults() {
+        return new VirtualEntityFactory(null, null, false,
+                null, "", null);
+    }
+
     public VirtualEntityFactory withDisplayNamePosition(Vector position) {
         this.displayNamePosition = position;
         return this;
@@ -157,13 +162,13 @@ public class VirtualEntityFactory {
         return useWhitelistAsBlacklist;
     }
 
-    public VirtualEntityFactory withAttribute(Attribute attribute, double baseValue) {
-        attributes.put(attribute, VirtualAttributeFactory.getAttributeInstance(attribute,baseValue));
+    public VirtualEntityFactory withTriggeredSound(String triggeredSound) {
+        this.triggeredSound = triggeredSound;
         return this;
     }
 
-    public VirtualEntityFactory withAttributes(Map<Attribute,AttributeInstance> attributes) {
-        this.attributes = attributes;
+    public VirtualEntityFactory withAttribute(Attribute attribute, double baseValue) {
+        attributes.put(attribute, VirtualAttributeFactory.getAttributeInstance(attribute, baseValue));
         return this;
     }
 
@@ -242,7 +247,19 @@ public class VirtualEntityFactory {
         return this;
     }
 
-    public SpeechBalloonLayout getSpeechBalloonLayout() { return speechBalloonLayout; }
+    public VirtualEntityFactory withAttributes(Map<Attribute, AttributeInstance> attributes) {
+        this.attributes = attributes;
+        return this;
+    }
+
+    public VirtualEntityFactory withSubtitleLayout(SpeechBalloonLayout subtitleLayout) {
+        this.subtitleLayout = subtitleLayout;
+        return this;
+    }
+
+    public SpeechBalloonLayout getSpeechBalloonLayout() {
+        return speechBalloonLayout;
+    }
 
     public VirtualEntityFactory withMouth(Vector mouth) {
         this.mouth = mouth;
@@ -276,9 +293,8 @@ public class VirtualEntityFactory {
         return headPoseDelay;
     }
 
-    public VirtualEntityFactory withGoalFactory(VirtualEntityGoalFactory factory) {
-        this.goalFactory = factory;
-        return  this;
+    public SpeechBalloonLayout getSubtitleLayout() {
+        return subtitleLayout;
     }
 
     public VirtualEntityGoalFactory getGoalFactory() {
@@ -297,6 +313,7 @@ public class VirtualEntityFactory {
         this.type = type;
         return this;
     }
+
     public McmeEntityType getType() {
         return type;
     }
@@ -313,30 +330,28 @@ public class VirtualEntityFactory {
         return displayName;
     }
 
-    public Vector getDisplayNamePosition() { return displayNamePosition; }
-
-    public Location getLocation() {
-        if(spawnLocationEntity!=null) {
-            return spawnLocationEntity.getLocation().clone();
-        }
-        return (location!=null?location.clone():null);
+    public VirtualEntityFactory withGoalFactory(VirtualEntityGoalFactory factory) {
+        this.goalFactory = factory;
+        return this;
     }
 
-    public Vector getMouth() { return mouth; }
+    public String getTriggeredSound() {
+        return triggeredSound;
+    }
 
-    /**
-     * Attributes are not yet implemented.
-     * @return
-     */
-    public Map<Attribute, AttributeInstance> getAttributes() {
-        Map<Attribute,AttributeInstance> result = new HashMap<>();
-        if(attributes!=null) {
-            attributes.forEach((attribute, instance)
-                    -> result.put(attribute, new VirtualEntityAttributeInstance(attribute,
-                    instance.getBaseValue(),
-                    instance.getDefaultValue())));
+    public Vector getDisplayNamePosition() {
+        return displayNamePosition;
+    }
+
+    public Location getLocation() {
+        if (spawnLocationEntity != null) {
+            return spawnLocationEntity.getLocation().clone();
         }
-        return result;
+        return (location != null ? location.clone() : null);
+    }
+
+    public Vector getMouth() {
+        return mouth;
     }
 
     public int getJumpHeight() {
@@ -519,9 +534,20 @@ public class VirtualEntityFactory {
         return this;
     }
 
-    public static VirtualEntityFactory getDefaults() {
-        return new VirtualEntityFactory(null,null,false,
-                                         null ,"",null);
+    /**
+     * Attributes are not yet implemented.
+     *
+     * @return
+     */
+    public Map<Attribute, AttributeInstance> getAttributes() {
+        Map<Attribute, AttributeInstance> result = new HashMap<>();
+        if (attributes != null) {
+            attributes.forEach((attribute, instance)
+                    -> result.put(attribute, new VirtualEntityAttributeInstance(attribute,
+                    instance.getBaseValue(),
+                    instance.getDefaultValue())));
+        }
+        return result;
     }
 
     public boolean isWriteDefaultValuesToFile() {
@@ -535,69 +561,32 @@ public class VirtualEntityFactory {
 
     /**
      * For internal use by the entity server only.
-     * @param entityId
-     * @return
+     *
+     * @param entityId the entity id
+     * @return A built entity
      * @throws InvalidLocationException
      */
     public McmeEntity build(int entityId) throws InvalidLocationException, InvalidDataException {
-//Logger.getGlobal().info("UUID: "+uniqueId.toString());
-        if(type.isCustomType()) {
-            switch(type.getCustomType()) {
-                case BAKED_ANIMATION:
-                    return new BakedAnimationEntity(entityId, this);
-                case WINGED_FLIGHT:
-                    return new WingedFlightEntity(entityId, this);
-                default:
-                    throw new RuntimeException("EntityType not implemented");
-            }
+        if (type.isCustomType()) {
+            return switch (type.getCustomType()) {
+                case BAKED_ANIMATION -> new BakedAnimationEntity(entityId, this);
+                case WINGED_FLIGHT -> new WingedFlightEntity(entityId, this);
+                default -> throw new RuntimeException("EntityType not implemented");
+            };
         } else {
-            switch(type.getBukkitEntityType()) {
-                case EXPERIENCE_ORB:
-                case PAINTING:
-                case PRIMED_TNT:
-                    throw new RuntimeException("EntityType not implemented");
-                case PLAYER:
-                    return new SimplePlayer(entityId, this);
-                case ARROW:
-                case SPECTRAL_ARROW:
-                case SNOWBALL:
-                case EGG:
-                case SPLASH_POTION:
-                case THROWN_EXP_BOTTLE:
-                case TRIDENT:
-                case ENDER_PEARL:
-                case FIREWORK:
-                case FALLING_BLOCK:
-                case LLAMA_SPIT:
-                    return new Projectile(entityId,this);
-                case AREA_EFFECT_CLOUD:
-                case ARMOR_STAND:
-                case BOAT:
-                case DRAGON_FIREBALL:
-                case ENDER_CRYSTAL:
-                case EVOKER:
-                case IRON_GOLEM:
-                case ITEM_FRAME:
-                case FIREBALL:
-                case LEASH_HITCH:
-                case LIGHTNING:
-                case MINECART:
-                case MINECART_CHEST:
-                case MINECART_COMMAND:
-                case MINECART_FURNACE:
-                case MINECART_HOPPER:
-                case MINECART_MOB_SPAWNER:
-                case MINECART_TNT:
-                case SHULKER_BULLET:
-                case SMALL_FIREBALL:
-                case WITHER_SKULL:
-                case FISHING_HOOK:
-                    return new SimpleNonLivingEntity(entityId, this);
-                case HORSE:
-                    return new SimpleHorse(entityId, this);
-                default:
-                    return new SimpleLivingEntity(entityId, this);
-            }
+            return switch (type.getBukkitEntityType()) {
+                case EXPERIENCE_ORB, PAINTING, PRIMED_TNT -> throw new RuntimeException("EntityType not implemented");
+                case PLAYER -> new SimplePlayer(entityId, this);
+                case ARROW, SPECTRAL_ARROW, SNOWBALL, EGG, SPLASH_POTION, THROWN_EXP_BOTTLE, TRIDENT, ENDER_PEARL,
+                        FIREWORK, FALLING_BLOCK, LLAMA_SPIT -> new Projectile(entityId, this);
+                case AREA_EFFECT_CLOUD, ARMOR_STAND, BOAT, DRAGON_FIREBALL, ENDER_CRYSTAL, EVOKER,
+                        IRON_GOLEM, ITEM_FRAME, FIREBALL, LEASH_HITCH, LIGHTNING, MINECART, MINECART_CHEST,
+                        MINECART_COMMAND, MINECART_FURNACE, MINECART_HOPPER, MINECART_MOB_SPAWNER, MINECART_TNT,
+                        SHULKER_BULLET, SMALL_FIREBALL, WITHER_SKULL, FISHING_HOOK ->
+                        new SimpleNonLivingEntity(entityId, this);
+                case HORSE -> new SimpleHorse(entityId, this);
+                default -> new SimpleLivingEntity(entityId, this);
+            };
         }
     }
 

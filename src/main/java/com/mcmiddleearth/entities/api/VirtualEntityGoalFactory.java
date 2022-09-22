@@ -15,7 +15,6 @@ import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
 import com.mcmiddleearth.entities.util.Constrain;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
@@ -28,7 +27,7 @@ public class VirtualEntityGoalFactory {
 
     private MovementSpeed movementSpeed = MovementSpeed.WALK;
 
-    private GoalType goalType = GoalType.NONE;
+    private GoalType goalType;
 
     private Location targetLocation = null;
 
@@ -44,7 +43,7 @@ public class VirtualEntityGoalFactory {
 
     private int updateInterval = 10;
 
-    private Vector relativePosition = new Vector(0d,0d,0d);
+    private Vector relativePosition = new Vector(0d, 0d, 0d);
 
     private double flightLevel = 20;
     private float attackPitch = 45;
@@ -62,7 +61,7 @@ public class VirtualEntityGoalFactory {
     }
 
     public static Collection<String> availableProperties() {
-        return Stream.of("goaltype","targetlocation","targetentity","loop","checkpoints","headgoal").map(String::toLowerCase)
+        return Stream.of("goaltype", "targetlocation", "targetentity", "loop", "checkpoints", "headgoal").map(String::toLowerCase)
                 .sorted().collect(Collectors.toList());
     }
 
@@ -193,7 +192,7 @@ public class VirtualEntityGoalFactory {
     }
 
     public GoalVirtualEntity build(VirtualEntity entity) throws InvalidLocationException, InvalidDataException {
-        if(goalType == null) {
+        if (goalType == null) {
             return null;
         }
         MovementType movementType = entity.getMovementType();
@@ -201,132 +200,145 @@ public class VirtualEntityGoalFactory {
 //Logger.getGlobal().info("target: "+targetEntity);
         Pathfinder pathfinder;
         GoalVirtualEntity goal;
-        if((entity instanceof WingedFlightEntity) && movementType.equals(MovementType.FLYING)) {
-Logger.getGlobal().info("pathfinder: flying");
-            pathfinder = new FlyingPathfinder((WingedFlightEntity)entity);
+        if ((entity instanceof WingedFlightEntity) && movementType.equals(MovementType.FLYING)) {
+            Logger.getGlobal().info("pathfinder: flying");
+            pathfinder = new FlyingPathfinder((WingedFlightEntity) entity);
         } else {
-            switch (movementType) {
-                case UPRIGHT:
-                case SNEAKING:
-                    pathfinder = new WalkingPathfinder(entity);
-                    //Logger.getGlobal().info("walking pathfinding!");
-                    break;
-                default:
+            pathfinder = switch (movementType) {
+                case UPRIGHT, SNEAKING -> new WalkingPathfinder(entity);
+                //Logger.getGlobal().info("walking pathfinding!");
+                default ->
                     //Logger.getGlobal().info("Simple pathfinding!");
-                    pathfinder = new SimplePathfinder();
-            }
+                        new SimplePathfinder();
+            };
         }
-        switch(goalType) {
-            case WATCH_ENTITY:
+        switch (goalType) {
+            case WATCH_ENTITY -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalWatchEntity(entity,this);
-                break;
-            case RANGED_ATTACK_ENTITY:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalWatchEntity(entity, this);
+            }
+            case WATCH_NEAREST -> goal = new GoalWatchNearestEntity(entity, this);
+            case WATCH_ENTITY_CONV -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalRangedAttack(entity,this);
-                break;
-            case FOLLOW_ENTITY:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalWatchEntityConversation(entity, this);
+            }
+            case RANGED_ATTACK_ENTITY -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalEntityTargetFollow(entity,this, pathfinder);
-                break;
-            case FOLLOW_ENTITY_STALKING:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalRangedAttack(entity, this);
+            }
+            case FOLLOW_ENTITY -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalEntityTargetFollowStalking(entity,this, pathfinder);
-                break;
-            case ATTACK_ENTITY:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalEntityTargetFollow(entity, this, pathfinder);
+            }
+            case FOLLOW_ENTITY_STALKING -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalEntityTargetAttack(entity,this, pathfinder);
-                break;
-            case ATTACK_ENTITY_SPRINT:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalEntityTargetFollowStalking(entity, this, pathfinder);
+            }
+            case ATTACK_ENTITY -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalEntityTargetAttackSprint(entity,this, pathfinder);
-                break;
-            case ATTACK_ENTITY_WINGED:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalEntityTargetAttack(entity, this, pathfinder);
+            }
+            case ATTACK_ENTITY_SPRINT -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalEntityTargetAttackSprint(entity, this, pathfinder);
+            }
+            case ATTACK_ENTITY_WINGED -> {
+                Constrain.checkEntity(targetEntity);
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
                 Constrain.checkClass(entity, WingedFlightEntity.class);
-                goal = new GoalEntityTargetAttackWinged((WingedFlightEntity)entity,this, pathfinder);
-                break;
-            case ATTACK_CLOSE:
-                if(targetEntity != null && !(targetEntity instanceof Placeholder)) {
+                goal = new GoalEntityTargetAttackWinged((WingedFlightEntity) entity, this, pathfinder);
+            }
+            case ATTACK_CLOSE -> {
+                if (targetEntity != null && !(targetEntity instanceof Placeholder)) {
                     Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
                 }
                 goal = new GoalEntityTargetAttackClose(entity, this, pathfinder);
-                break;
-            case DEFEND_ENTITY:
+            }
+            case DEFEND_ENTITY -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalEntityTargetDefend(entity,this, pathfinder);
-                break;
-            case GOTO_LOCATION:
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalEntityTargetDefend(entity, this, pathfinder);
+            }
+            case GOTO_LOCATION -> {
                 Constrain.checkTargetLocation(targetLocation);
-                Constrain.checkSameWorld(targetLocation,entity.getLocation().getWorld());
-                goal = new GoalLocationTargetGoto(entity,this, pathfinder);
-                break;
-            case FOLLOW_CHECKPOINTS:
+                Constrain.checkSameWorld(targetLocation, entity.getLocation().getWorld());
+                goal = new GoalLocationTargetGoto(entity, this, pathfinder);
+            }
+            case FOLLOW_CHECKPOINTS -> {
                 Constrain.checkCheckpoints(checkpoints);
-                Constrain.checkSameWorld(checkpoints,entity.getLocation().getWorld());
-                goal = new GoalLocationTargetFollowCheckpoints(entity,this, pathfinder);
-                break;
+                Constrain.checkSameWorld(checkpoints, entity.getLocation().getWorld());
+                goal = new GoalLocationTargetFollowCheckpoints(entity, this, pathfinder);
+            }
+            case FOLLOW_CHECKPOINTS_WONDERING -> {
+                Constrain.checkCheckpoints(checkpoints);
+                Constrain.checkSameWorld(checkpoints, entity.getLocation().getWorld());
+                goal = new GoalLocationTargetFollowCheckpointsWondering(entity, this, pathfinder);
+            }
             /*case FOLLOW_CHECKPOINTS_WINGED:
                 Constrain.checkCheckpoints(checkpoints);
                 Constrain.checkSameWorld(checkpoints,entity.getLocation().getWorld());
                 goal = new GoalLocationTargetFollowCheckpointsWingedFlight(entity,this, pathfinder);
                 break;*/
-            case RANDOM_CHECKPOINTS:
+            case RANDOM_CHECKPOINTS -> {
                 Constrain.checkCheckpoints(checkpoints);
-                Constrain.checkSameWorld(checkpoints,entity.getLocation().getWorld());
-                goal = new GoalLocationTargetRandomCheckpoints(entity,this, pathfinder);
-                break;
-            case HOLD_POSITION:
+                Constrain.checkSameWorld(checkpoints, entity.getLocation().getWorld());
+                goal = new GoalLocationTargetRandomCheckpoints(entity, this, pathfinder);
+            }
+            case HOLD_POSITION -> {
                 Constrain.checkTargetLocation(targetLocation);
-                Constrain.checkSameWorld(targetLocation,entity.getLocation().getWorld());
-                goal = new GoalHoldPosition(entity,this);
-                break;
-            case MIMIC:
+                Constrain.checkSameWorld(targetLocation, entity.getLocation().getWorld());
+                goal = new GoalHoldPosition(entity, this);
+            }
+            case WATCH_LOCATION -> {
+                Constrain.checkTargetLocation(targetLocation);
+                Constrain.checkSameWorld(targetLocation, entity.getLocation().getWorld());
+                goal = new GoalWatchLocation(entity, this);
+            }
+            case MIMIC -> {
                 Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalMimic(entity,this);
-                break;
-            case JOCKEY:
-                Constrain.checkEntity(targetEntity);
-                if(!(targetEntity instanceof Placeholder))
-                    Constrain.checkSameWorld(targetEntity.getLocation(),entity.getLocation().getWorld());
-                goal = new GoalJockey(entity,this);
-                break;
-            case RIDING_PLAYER:
-Logger.getGlobal().info("Target: "+targetEntity);
-Logger.getGlobal().info("entity: "+entity);
-                if((targetEntity instanceof RealPlayer) && entity instanceof WingedFlightEntity) {
+                if (!(targetEntity instanceof Placeholder))
                     Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
-Logger.getGlobal().info("Create goal!");
+                goal = new GoalMimic(entity, this);
+            }
+            case JOCKEY -> {
+                Constrain.checkEntity(targetEntity);
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalJockey(entity, this);
+            }
+            case RIDING_PLAYER -> {
+                Logger.getGlobal().info("Target: " + targetEntity);
+                Logger.getGlobal().info("entity: " + entity);
+                if ((targetEntity instanceof RealPlayer) && entity instanceof WingedFlightEntity) {
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                    Logger.getGlobal().info("Create goal!");
                     goal = new GoalRidingPlayer((WingedFlightEntity) entity, this);
                 } else {
                     goal = null;
                 }
-                break;
-            default:
-                goal = null;
+            }
+            default -> goal = null;
         }
-        if(goal!=null && headGoals != null) {
+        if (goal != null && headGoals != null) {
             goal.clearHeadGoals();
             headGoals.forEach(headGoal -> {
-                if(headGoal.provideGoalAndEntity(goal,entity)) {
+                if (headGoal.provideGoalAndEntity(goal, entity)) {
                     goal.addHeadGoal(headGoal);
                 }
             });

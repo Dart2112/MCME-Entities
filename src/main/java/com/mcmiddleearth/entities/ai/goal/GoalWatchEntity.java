@@ -23,25 +23,34 @@ public class GoalWatchEntity extends GoalVirtualEntity {
     public GoalWatchEntity(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
         this.target = factory.getTargetEntity();
-        if(this.target instanceof Placeholder) {
+        if (this.target instanceof Placeholder) {
             targetIncomplete = true;
         }
         movementSpeed = MovementSpeed.STAND;
+
+        if (this.target == null) return;
         setDefaultHeadGoal();
     }
 
     @Override
     public void update() {
         super.update();
-        if(targetIncomplete) {
+        if (targetIncomplete) {
             McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(target.getUniqueId());
-            if(search != null) {
+            if (search != null) {
                 target = search;
                 targetIncomplete = false;
             }
         }
-        if(!targetIncomplete) {
-            if (tickCounter%3==0) {
+
+        if (target == null) return;
+        if (!target.isOnline()) {
+            this.targetIncomplete = true;
+            return;
+        }
+
+        if (!targetIncomplete) {
+            if (tickCounter % 3 == 0) {
                 Location orientation = getEntity().getLocation().clone()
                         .setDirection(target.getLocation().toVector().subtract(getEntity().getLocation().toVector()));
                 setYaw(orientation.getYaw());
@@ -83,7 +92,7 @@ public class GoalWatchEntity extends GoalVirtualEntity {
 
     public void setDefaultHeadGoal() {
         clearHeadGoals();
-        addHeadGoal(new HeadGoalWatch(target,getEntity()));
+        addHeadGoal(new HeadGoalWatch(target, getEntity()));
     }
 
     /*remove
