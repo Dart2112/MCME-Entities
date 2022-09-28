@@ -6,13 +6,13 @@ import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
-import com.mcmiddleearth.entities.protocol.packets.*;
+import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
+import com.mcmiddleearth.entities.protocol.packets.DisplayNamePacket;
+import com.mcmiddleearth.entities.protocol.packets.VirtualEntityDestroyPacket;
 import com.mcmiddleearth.entities.protocol.packets.simple.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.logging.Logger;
 
 public abstract class SimpleEntity extends VirtualEntity {
 

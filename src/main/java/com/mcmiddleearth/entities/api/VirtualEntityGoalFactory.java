@@ -37,7 +37,7 @@ public class VirtualEntityGoalFactory {
 
     private McmeEntity targetEntity = null;
 
-    private boolean loop;
+    private boolean loop = true;
 
     private Set<HeadGoal> headGoals = null;
 
