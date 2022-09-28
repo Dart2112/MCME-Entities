@@ -39,7 +39,8 @@ public class VirtualEntityUseListener extends EntityListener {
         RealPlayer player = EntitiesPlugin.getEntityServer().getOrCreateMcmePlayer(event.getPlayer());
         int entityId = packet.getIntegers().read(0);
         McmeEntity entity = entityServer.getEntity(entityId);
-        if (entity instanceof VirtualEntity virtualEntity) {
+        if (entity instanceof VirtualEntity) {
+            VirtualEntity virtualEntity = (VirtualEntity) entity;
             EnumWrappers.EntityUseAction action = EnumWrappers.EntityUseAction.INTERACT;
 
             //1.18 fix to replace malfunctioning ProtocolLib Snapshot 4.8.0
@@ -52,8 +53,12 @@ public class VirtualEntityUseListener extends EntityListener {
                 Object enumAction = a.invoke(enumEntityUseAction);
                 //Logger.getGlobal().info("Action: "+((Enum<?>) enumAction).name());
                 switch (((Enum<?>) enumAction).name()) {
-                    case "ATTACK" -> action = EnumWrappers.EntityUseAction.ATTACK;
-                    case "INTERACT_AT" -> action = EnumWrappers.EntityUseAction.INTERACT_AT;
+                    case "ATTACK":
+                        action = EnumWrappers.EntityUseAction.ATTACK;
+                        break;
+                    case "INTERACT_AT":
+                        action = EnumWrappers.EntityUseAction.INTERACT_AT;
+                        break;
                 }
             } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException |
                      InvocationTargetException e) {
@@ -62,10 +67,15 @@ public class VirtualEntityUseListener extends EntityListener {
             // end of ProtocolLib replacement
             //not working in 1.18 (not done yet?) EnumWrappers.EntityUseAction action = packet.getEntityUseActions().read(0);
 
-            if (entity.getGoal() instanceof GoalMimic goalMimic && goalMimic.getMimic().equals(player)) {
+            if (entity.getGoal() instanceof GoalMimic && ((GoalMimic) entity.getGoal()).getMimic().equals(player)) {
                 switch (action) {
-                    case INTERACT, INTERACT_AT -> entity.playAnimation(ActionType.INTERACT);
-                    case ATTACK -> entity.playAnimation(ActionType.ATTACK);
+                    case INTERACT:
+                    case INTERACT_AT:
+                        entity.playAnimation(ActionType.INTERACT);
+                        break;
+                    case ATTACK:
+                        entity.playAnimation(ActionType.ATTACK);
+                        break;
                 }
                 return;
             }
@@ -93,7 +103,7 @@ public class VirtualEntityUseListener extends EntityListener {
             boolean isSneaking = packet.getBooleans().read(0);
 
             switch (action) {
-                case INTERACT_AT -> {
+                case INTERACT_AT:
                     Vector vector = new Vector(0, 0, 0);
 
                     ///1.18 fix to replace malfunctioning ProtocolLib Snapshot 4.8.0
@@ -141,9 +151,8 @@ public class VirtualEntityUseListener extends EntityListener {
                     if (virtualEntity.getSubtitleLayout() != null) {
                         virtualEntity.saySubtitles(player.getBukkitPlayer());
                     }
-
-                }
-                case INTERACT -> {
+                    break;
+                case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, virtualEntity, hand, isSneaking));
                     if (virtualEntity.getTriggeredSound() != null) {
                         player.playSound(Sound.sound(Key.key(virtualEntity.getTriggeredSound()), Sound.Source.VOICE, 1f, 1f));
@@ -152,14 +161,14 @@ public class VirtualEntityUseListener extends EntityListener {
                     if (virtualEntity.getSubtitleLayout() != null) {
                         virtualEntity.saySubtitles(player.getBukkitPlayer());
                     }
-                }
-                case ATTACK -> {
+                    break;
+                case ATTACK:
                     VirtualPlayerAttackEvent entityEvent = new VirtualPlayerAttackEvent(player, virtualEntity, isSneaking);
                     throwEvent(entityEvent);
                     if (!entityEvent.isCancelled()) {
                         player.attack(entity);
                     }
-                }
+                    break;
             }
         }
     }

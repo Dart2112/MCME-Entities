@@ -43,10 +43,10 @@ public class SpeechBalloonLayout {
 
     public SpeechBalloonLayout(Position position, Width width) {
         this.position = position;
-        lineLengthNarrow = getConfig().getInt("LineLengthNarrow",15);
-        lineLengthWide = getConfig().getInt("LineLengthWide",30);
-        widthInBlocksNarrow = getConfig().getDouble("WidthInBlocksNarrow",1);
-        widthInBlocksWide = getConfig().getDouble("WidthInBlocksWide",2);
+        lineLengthNarrow = getConfig().getInt("LineLengthNarrow", 15);
+        lineLengthWide = getConfig().getInt("LineLengthWide", 30);
+        widthInBlocksNarrow = getConfig().getDouble("WidthInBlocksNarrow", 1);
+        widthInBlocksWide = getConfig().getDouble("WidthInBlocksWide", 2);
         hasBalloon = getConfig().getBoolean("HasBalloon", true);
         try {
             balloonMaterial = Material.valueOf(getConfig().getString("BalloonMaterial", "WHITE_STAINED_GLASS").toUpperCase());
@@ -65,33 +65,41 @@ public class SpeechBalloonLayout {
         }
         this.width = width;
         switch (position) {
-            case LEFT ->
-                    baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionLeft", new Vector(-1.5, 0.2, 0));
-            case RIGHT ->
-                    baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionRight", new Vector(1.5, 0.2, 0));
-            case TOP -> baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionTop", new Vector(0, 1.2, 0));
+            case LEFT:
+                baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionLeft", new Vector(-1.5, 0.2, 0));
+                break;
+            case RIGHT:
+                baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionRight", new Vector(1.5, 0.2, 0));
+                break;
+            case TOP:
+                baseOffset = ConfigurationUtil.getVector(getConfig(), "PositionTop", new Vector(0, 1.2, 0));
+                break;
         }
         layoutOffset = baseOffset;
     }
 
     public void layout() {
         // for Width.OPTIMAL determine optimal width
-        switch(width) {
-            case NARROW: isWide = false; break;
-            case WIDE: isWide = true; break;
+        switch (width) {
+            case NARROW:
+                isWide = false;
+                break;
+            case WIDE:
+                isWide = true;
+                break;
             case OPTIMAL:
-                if(isJson) {
+                if (isJson) {
                     isWide = true;
                 } else {
                     int maxLineLength = 0;
-                    for(String line: lines) {
+                    for (String line : lines) {
                         int length = ChatColor.stripColor(line).length();
-                        if(length>maxLineLength) maxLineLength = length;
+                        if (length > maxLineLength) maxLineLength = length;
                     }
-                    isWide = maxLineLength > lineLengthNarrow && (lines.length > 1 || maxLineLength >= lineLengthNarrow*2);
+                    isWide = maxLineLength > lineLengthNarrow && (lines.length > 1 || maxLineLength >= lineLengthNarrow * 2);
                 }
         }
-        if(!isJson) {
+        if (!isJson) {
             // wrap text to fit with width
 
             //todo: repeat last color code in new line!
@@ -144,34 +152,38 @@ public class SpeechBalloonLayout {
         // set currentOffset to match amount of lines and width
         layoutOffset = new Vector(0, 0, baseOffset.getZ());
         switch (position) {
-            case RIGHT ->
-                    layoutOffset.setX(baseOffset.getX() + (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
-            case LEFT ->
-                    layoutOffset.setX(baseOffset.getX() - (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
-            case TOP -> layoutOffset.setX(baseOffset.getX());
+            case RIGHT:
+                layoutOffset.setX(baseOffset.getX() + (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
+                break;
+            case LEFT:
+                layoutOffset.setX(baseOffset.getX() - (isWide ? widthInBlocksWide / 2 : widthInBlocksNarrow / 2));
+                break;
+            case TOP:
+                layoutOffset.setX(baseOffset.getX());
+                break;
         }
         layoutOffset.setY(baseOffset.getY() + linePitch * lines.length);
     }
 
     private boolean canAdd(String wrappedLine, String append, int maxLength) {
-        return ChatColor.stripColor(wrappedLine).length()+ChatColor.stripColor(append).length() <= maxLength;
+        return ChatColor.stripColor(wrappedLine).length() + ChatColor.stripColor(append).length() <= maxLength;
     }
 
     public Integer getBalloonModelData() {
-        int dataIndex = this.lines.length-1;
+        int dataIndex = this.lines.length - 1;
         Integer[] modelData;
-        if(isWide) {
+        if (isWide) {
             modelData = modelDataWide;
         } else {
             modelData = modelDataNarrow;
         }
-        dataIndex = Math.min(modelData.length-1,dataIndex);
+        dataIndex = Math.min(modelData.length - 1, dataIndex);
         return modelData[dataIndex];
     }
 
     public SpeechBalloonLayout withBalloonModelData(Integer[] dataValues, boolean wide) {
         if (dataValues.length > 0) {
-            if(wide) {
+            if (wide) {
                 modelDataWide = dataValues;
             } else {
                 modelDataNarrow = dataValues;
@@ -347,7 +359,7 @@ public class SpeechBalloonLayout {
 
     private ConfigurationSection getConfig() {
         ConfigurationSection result = EntitiesPlugin.getInstance().getConfig().getConfigurationSection("SpeechBalloonLayout");
-        if(result==null) {
+        if (result == null) {
             result = new MemoryConfiguration();
         }
         return result;

@@ -30,9 +30,15 @@ public class BakedAnimationTree {
                 String[] temp = pathArray.clone();
                 MovementSpeed speed = MovementSpeed.valueOf(temp[i].toUpperCase());
                 switch (speed) {
-                    case SLOW -> temp[i] = MovementSpeed.BACKWARD_SLOW.name().toLowerCase();
-                    case WALK -> temp[i] = MovementSpeed.BACKWARD_WALK.name().toLowerCase();
-                    case SPRINT -> temp[i] = MovementSpeed.BACKWARD_SPRINT.name().toLowerCase();
+                    case SLOW:
+                        temp[i] = MovementSpeed.BACKWARD_SLOW.name().toLowerCase();
+                        break;
+                    case WALK:
+                        temp[i] = MovementSpeed.BACKWARD_WALK.name().toLowerCase();
+                        break;
+                    case SPRINT:
+                        temp[i] = MovementSpeed.BACKWARD_SPRINT.name().toLowerCase();
+                        break;
                 }
                 addBackwardFallbackAnimation(temp, animation);
             } catch (IllegalArgumentException ignore) {}
@@ -117,7 +123,10 @@ public class BakedAnimationTree {
                     return searchResult;
                 }
                 SearchResult alternative = searchAlternative(path);
-                return Objects.requireNonNullElse(alternative, searchResult);
+                if (alternative != null) {
+                    return alternative;
+                }
+                return searchResult;
             }
         } else {
             if (path.length > 1) {
