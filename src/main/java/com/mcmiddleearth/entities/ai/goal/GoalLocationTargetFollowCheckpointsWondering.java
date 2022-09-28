@@ -14,16 +14,21 @@ import org.bukkit.entity.Player;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class GoalLocationTargetFollowCheckpointsWondering extends GoalLocationTarget {
 
     private final Location[] checkpoints;
     private final boolean loop;
     protected McmeEntity target;
+    protected UUID uniqueId;
     protected boolean targetIncomplete = false;
     private int currentCheckpoint;
     private boolean targetPlayer;
     private int tickCounter = 0;
+    private HeadGoalWatch headGoalWatch;
 
     public GoalLocationTargetFollowCheckpointsWondering(VirtualEntity entity, VirtualEntityGoalFactory factory, Pathfinder pathfinder) {
         super(entity, factory, pathfinder);
@@ -31,13 +36,17 @@ public class GoalLocationTargetFollowCheckpointsWondering extends GoalLocationTa
         this.checkpoints = factory.getCheckpoints();
         this.loop = factory.isLoop();
         this.target = factory.getTargetEntity();
+        this.uniqueId = target.getUniqueId();
         this.targetPlayer = false;
         currentCheckpoint = factory.getStartCheckpoint();
 
         setTarget(checkpoints[currentCheckpoint]);
         setPathTarget(checkpoints[currentCheckpoint].toVector());
 
-        setDefaultHeadGoal();
+        this.headGoalWatch = new HeadGoalWatch(target, getEntity());
+
+        clearHeadGoals();
+        addHeadGoal(headGoalWatch);
     }
 
     @Override
@@ -87,15 +96,15 @@ public class GoalLocationTargetFollowCheckpointsWondering extends GoalLocationTa
 
     private void lookAtTarget() {
         if (targetIncomplete) {
-            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(target.getUniqueId());
+            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(uniqueId);
             if (search != null) {
                 target = search;
                 targetIncomplete = false;
+                headGoalWatch.setTarget(target);
             }
         }
 
-        if (target == null) return;
-        if (!target.isOnline()) {
+        if (target == null || !target.isOnline() || target.isDead()) {
             this.targetIncomplete = true;
             return;
         }
@@ -116,23 +125,32 @@ public class GoalLocationTargetFollowCheckpointsWondering extends GoalLocationTa
 
     private void selectTarget() {
         targetIncomplete = false;
-        Collection<Player> nearbyPlayers = getEntity().getWorld().getNearbyPlayers(getEntity().getLocation(), 10);
+
+        final Location entityLocation = getEntity().getLocation();
+        Collection<Player> nearbyPlayers = getEntity().getLocation().getWorld()
+                .getNearbyEntities(entityLocation, 10, 10, 10, entity -> entity instanceof Player)
+                .stream()
+                .map(entity -> (Player) entity)
+                .collect(Collectors.toList());
         if (nearbyPlayers.size() == 1 && this.target != null && this.target.isOnline()) {
             return;
         }
 
-        final Location entityLocation = getEntity().getLocation();
-        nearbyPlayers.stream()
-                .min(Comparator.comparingDouble(o -> o.getLocation().distanceSquared(entityLocation)))
-                .ifPresentOrElse(player -> {
-                    McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(target.getUniqueId());
-                    if (search != null) {
-                        if (target != null && target.getUniqueId().equals(search.getUniqueId())) return;
+        Optional<Player> playerOptional = nearbyPlayers.stream()
+                .min(Comparator.comparingDouble(o -> o.getLocation().distanceSquared(entityLocation)));
+        if(!playerOptional.isPresent()) {
+            this.target = null;
+            return;
+        }
 
-                        target = search;
-                        setDefaultHeadGoal();
-                    }
-                }, () -> target = null);
+        Player player = playerOptional.get();
+        McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(player.getUniqueId());
+        if (search != null) {
+            if (target != null && target.getUniqueId().equals(search.getUniqueId())) return;
+
+            target = search;
+            setDefaultHeadGoal();
+        }
     }
 
 

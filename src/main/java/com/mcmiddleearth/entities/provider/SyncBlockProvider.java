@@ -41,7 +41,6 @@ public class SyncBlockProvider implements BlockProvider {
                 y--;
             } while (isPassable(x, y, z) && y > world.getMinHeight() && y >= yStart-range);
         }
-//Logger.getGlobal().info("blockTopY: x:"+x+" y:"+yStart+" z:"+z+" range:"+range+" found y: "+y);
         return getBoundingBox(x,y,z).getMaxY();
     }
 

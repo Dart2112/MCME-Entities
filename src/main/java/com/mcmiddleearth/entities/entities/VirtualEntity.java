@@ -24,6 +24,10 @@ import com.mcmiddleearth.entities.inventory.McmeInventory;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import com.mcmiddleearth.entities.util.UuidGenerator;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attributable;
@@ -38,6 +42,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 
 public abstract class VirtualEntity implements McmeEntity, Attributable {
@@ -125,7 +131,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.location = factory.getLocation();
         this.headYaw = factory.getHeadYaw();
         this.headPitch = factory.getHeadPitch();
-        this.uniqueId = Objects.requireNonNullElse(factory.getUniqueId(), UuidGenerator.fast_random());
+        if(factory.getUniqueId() != null) {
+            this.uniqueId = factory.getUniqueId();
+        } else {
+            this.uniqueId = UuidGenerator.fast_random();
+        }
         this.name = (factory.getName() != null ? factory.getName() : "unnamed");
         this.attributes = factory.getAttributes();
         this.displayName = factory.getDisplayName();
@@ -754,19 +764,22 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         createSpeechBalloon(player);
 
         String line = ChatColor.translateAlternateColorCodes('&', subtitleLayout.getLines()[0]);
+        Component component = LegacyComponentSerializer.builder().hexColors().character('&').build().deserialize(line).decoration(TextDecoration.ITALIC, false);
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
                 if (speechCounter <= 0) {
                     player.sendActionBar(Component.empty());
                     this.cancel();
+                    return;
                 }
 
-                player.sendActionBar(line);
+                player.spigot().sendMessage(TextComponent.fromLegacyText(line));
+                player.sendActionBar(component);
             }
         };
 
-        bukkitRunnable.runTaskTimer(EntitiesPlugin.getInstance(), 2L, 2L);
+        bukkitRunnable.runTaskTimer(EntitiesPlugin.getInstance(), 1L, 1L);
     }
 
     private void createSpeechBalloon(Player viewer) {

@@ -84,7 +84,7 @@ public class SetCommand extends McmeEntitiesCommandHandler {
                         )
                 )
                 .then(HelpfulLiteralBuilder.literal("sound")
-                        .then(HelpfulRequiredArgumentBuilder.argument("sound", word())
+                        .then(HelpfulRequiredArgumentBuilder.argument("sound", greedyString())
                                 .executes(
                                         context -> setTriggerSound(context.getSource(), context.getArgument("sound", String.class))
                                 )

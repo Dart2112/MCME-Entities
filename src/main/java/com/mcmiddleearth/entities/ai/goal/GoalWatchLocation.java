@@ -1,5 +1,6 @@
 package com.mcmiddleearth.entities.ai.goal;
 
+import com.mcmiddleearth.entities.ai.goal.head.HeadGoalLook;
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalStare;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
@@ -14,6 +15,7 @@ public class GoalWatchLocation extends GoalVirtualEntity {
         super(entity, factory);
 
         targetLocation = factory.getTargetLocation();
+
 
         Location location = entity.getLocation().clone();
         Location orientation = location.setDirection(targetLocation.toVector().subtract(location.toVector()));
@@ -31,23 +33,8 @@ public class GoalWatchLocation extends GoalVirtualEntity {
 
     public void setDefaultHeadGoal() {
         clearHeadGoals();
-        addHeadGoal(new HeadGoalStare(getYaw(), getPitch()));
+        addHeadGoal(new HeadGoalLook(targetLocation, getEntity()));
     }
-
-    /*@Override
-    public float getYaw() {
-        return yaw;
-    }
-
-    @Override
-    public float getPitch() {
-        return pitch;
-    }
-
-    @Override
-    public float getRoll() {
-        return 0;
-    }*/
 
     @Override
     public VirtualEntityGoalFactory getFactory() {

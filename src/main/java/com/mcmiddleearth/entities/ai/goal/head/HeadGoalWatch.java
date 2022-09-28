@@ -8,7 +8,7 @@ import org.bukkit.Location;
 
 public class HeadGoalWatch extends HeadGoal {
 
-    private final McmeEntity target;
+    private McmeEntity target;
 
     private McmeEntity entity;
 
@@ -24,6 +24,10 @@ public class HeadGoalWatch extends HeadGoal {
 
     public void setEntity(VirtualEntity entity) {
         this.entity = entity;
+    }
+
+    public void setTarget(McmeEntity target) {
+        this.target = target;
     }
 
     @Override

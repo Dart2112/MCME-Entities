@@ -227,11 +227,17 @@ public class VirtualEntityGoalFactory {
             case WATCH_NEAREST:
                 goal = new GoalWatchNearestEntity(entity, this);
                 break;
-            case WATCH_ENTITY_CONV:
+            case WATCH_ENTITY_CONVERSATION:
                 Constrain.checkEntity(targetEntity);
                 if (!(targetEntity instanceof Placeholder))
                     Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
                 goal = new GoalWatchEntityConversation(entity, this);
+                break;
+            case WATCH_ENTITY_CHEERING:
+                Constrain.checkEntity(targetEntity);
+                if (!(targetEntity instanceof Placeholder))
+                    Constrain.checkSameWorld(targetEntity.getLocation(), entity.getLocation().getWorld());
+                goal = new GoalWatchEntityCheering(entity, this);
                 break;
             case RANGED_ATTACK_ENTITY:
                 Constrain.checkEntity(targetEntity);

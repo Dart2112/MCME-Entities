@@ -10,14 +10,14 @@ import com.mcmiddleearth.entities.entities.VirtualEntity;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
+import java.util.UUID;
+
 public class GoalWatchEntity extends GoalVirtualEntity {
 
     protected McmeEntity target;
+    protected UUID uniqueId;
     protected boolean targetIncomplete = false;
-
-    //private boolean hasRotation;
-    //private float rotation;
-
+    protected HeadGoalWatch headGoalWatch;
     private int tickCounter = 0;
 
     public GoalWatchEntity(VirtualEntity entity, VirtualEntityGoalFactory factory) {
@@ -29,22 +29,30 @@ public class GoalWatchEntity extends GoalVirtualEntity {
         movementSpeed = MovementSpeed.STAND;
 
         if (this.target == null) return;
-        setDefaultHeadGoal();
+
+       this.headGoalWatch = new HeadGoalWatch(target, getEntity());
+
+        clearHeadGoals();
+        addHeadGoal(headGoalWatch);
     }
 
     @Override
     public void update() {
         super.update();
+        if(target != null) {
+            this.uniqueId = target.getUniqueId();
+        }
+
         if (targetIncomplete) {
-            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(target.getUniqueId());
+            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(uniqueId);
             if (search != null) {
                 target = search;
                 targetIncomplete = false;
+                headGoalWatch.setTarget(target);
             }
         }
 
-        if (target == null) return;
-        if (!target.isOnline()) {
+        if (target == null || !target.isOnline() || target.isDead()) {
             this.targetIncomplete = true;
             return;
         }
@@ -56,60 +64,21 @@ public class GoalWatchEntity extends GoalVirtualEntity {
                 setYaw(orientation.getYaw());
                 setPitch(orientation.getPitch());
                 tickCounter = 0;
-                //hasRotation = true;
             }
-            //secondUpdate = !secondUpdate;
             tickCounter++;
         }
     }
-
-    /*@Override
-    public void doTick() {
-        super.doTick();
-
-        //hasRotation = false;
-    }*/
 
     @Override
     public Vector getDirection() {
         return null;
     }
 
-    /*@Override
-    public boolean hasRotation() {
-        return hasRotation;
-    }
-
-    @Override
-    public float getRotation() {
-        return rotation;
-    }*/
 
     @Override
     public boolean isFinished() {
         return false;
     }
-
-    public void setDefaultHeadGoal() {
-        clearHeadGoals();
-        addHeadGoal(new HeadGoalWatch(target, getEntity()));
-    }
-
-    /*remove
-    @Override
-    public float getYaw() {
-        return getEntity().getLocation().clone()
-                .setDirection(target.getLocation().toVector().subtract(getEntity().getLocation().toVector()))
-                .getYaw();
-    }
-
-    remove
-    @Override
-    public float getPitch() {
-        return getEntity().getLocation().clone()
-                .setDirection(target.getLocation().toVector().subtract(getEntity().getLocation().toVector()))
-                .getPitch();
-    }*/
 
     @Override
     public float getRoll() {

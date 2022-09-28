@@ -17,7 +17,10 @@ import com.mcmiddleearth.entities.server.EntityServer;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
@@ -41,31 +44,7 @@ public class VirtualEntityUseListener extends EntityListener {
         McmeEntity entity = entityServer.getEntity(entityId);
         if (entity instanceof VirtualEntity) {
             VirtualEntity virtualEntity = (VirtualEntity) entity;
-            EnumWrappers.EntityUseAction action = EnumWrappers.EntityUseAction.INTERACT;
-
-            //1.18 fix to replace malfunctioning ProtocolLib Snapshot 4.8.0
-            try {
-                Field b = packet.getHandle().getClass().getDeclaredField("b");
-                b.setAccessible(true);
-                Object enumEntityUseAction = b.get(packet.getHandle());
-                Method a = enumEntityUseAction.getClass().getMethod("a");
-                a.setAccessible(true);
-                Object enumAction = a.invoke(enumEntityUseAction);
-                //Logger.getGlobal().info("Action: "+((Enum<?>) enumAction).name());
-                switch (((Enum<?>) enumAction).name()) {
-                    case "ATTACK":
-                        action = EnumWrappers.EntityUseAction.ATTACK;
-                        break;
-                    case "INTERACT_AT":
-                        action = EnumWrappers.EntityUseAction.INTERACT_AT;
-                        break;
-                }
-            } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException |
-                     InvocationTargetException e) {
-                e.printStackTrace();
-            }
-            // end of ProtocolLib replacement
-            //not working in 1.18 (not done yet?) EnumWrappers.EntityUseAction action = packet.getEntityUseActions().read(0);
+            EnumWrappers.EntityUseAction action = packet.getEntityUseActions().read(0);
 
             if (entity.getGoal() instanceof GoalMimic && ((GoalMimic) entity.getGoal()).getMimic().equals(player)) {
                 switch (action) {
@@ -81,53 +60,19 @@ public class VirtualEntityUseListener extends EntityListener {
             }
             event.setCancelled(true);
 
-            EquipmentSlot hand = EquipmentSlot.HAND;
-
-            try {
-                Field b = packet.getHandle().getClass().getDeclaredField("b");
-                b.setAccessible(true);
-                Object enumEntityUseAction = b.get(packet.getHandle());
-                Field a = enumEntityUseAction.getClass().getDeclaredField("a");
-                a.setAccessible(true);
-                Object enumHand = a.get(enumEntityUseAction);
-                if ((((Enum<?>) enumHand).name()).equals("OFF_HAND")) {
-                    hand = EquipmentSlot.OFF_HAND;
-                } else {
-                    Logger.getGlobal().info("Hand: " + ((Enum<?>) enumHand).name());
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException ignore) {
+            EquipmentSlot hand;
+            if(!action.equals(EnumWrappers.EntityUseAction.ATTACK)
+                    && packet.getHands().read(0).equals(EnumWrappers.Hand.MAIN_HAND)) {
+                hand = EquipmentSlot.HAND;
+            } else {
+                hand = EquipmentSlot.OFF_HAND;
             }
 
             boolean isSneaking = packet.getBooleans().read(0);
 
             switch (action) {
                 case INTERACT_AT:
-                    Vector vector = new Vector(0, 0, 0);
-
-                    ///1.18 fix to replace malfunctioning ProtocolLib Snapshot 4.8.0
-                    try {
-                        Field b = packet.getHandle().getClass().getDeclaredField("b");
-                        b.setAccessible(true);
-                        Object enumEntityUseAction = b.get(packet.getHandle());
-                        Field b_b = enumEntityUseAction.getClass().getDeclaredField("b");
-                        b_b.setAccessible(true);
-                        Object vec2D = b_b.get(enumEntityUseAction);
-                        Method getter = vec2D.getClass().getMethod("a");
-                        getter.setAccessible(true);
-                        vector.setX((double) getter.invoke(vec2D));
-                        getter = vec2D.getClass().getMethod("b");
-                        getter.setAccessible(true);
-                        vector.setY((double) getter.invoke(vec2D));
-                        getter = vec2D.getClass().getMethod("c");
-                        getter.setAccessible(true);
-                        vector.setZ((double) getter.invoke(vec2D));
-
-                    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                        e.printStackTrace();
-                    } catch (NoSuchFieldException ignore) {
-                    }
+                    Vector vector = packet.getVectors().read(0);
 
                     throwEvent(new VirtualPlayerInteractAtEvent(player, virtualEntity, vector, hand, isSneaking));
 
@@ -145,7 +90,9 @@ public class VirtualEntityUseListener extends EntityListener {
                     }
 
                     if (virtualEntity.getTriggeredSound() != null) {
-                        player.playSound(Sound.sound(Key.key(virtualEntity.getTriggeredSound()), Sound.Source.VOICE, 1f, 1f));
+                        Location location = virtualEntity.getLocation();
+                        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "playsound " + virtualEntity.getTriggeredSound() + " player " + player.getName() + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ()));
                     }
 
                     if (virtualEntity.getSubtitleLayout() != null) {
@@ -155,7 +102,9 @@ public class VirtualEntityUseListener extends EntityListener {
                 case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, virtualEntity, hand, isSneaking));
                     if (virtualEntity.getTriggeredSound() != null) {
-                        player.playSound(Sound.sound(Key.key(virtualEntity.getTriggeredSound()), Sound.Source.VOICE, 1f, 1f));
+                        Location location = virtualEntity.getLocation();
+                        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "playsound " + virtualEntity.getTriggeredSound() + " player " + player.getName() + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ()));
                     }
 
                     if (virtualEntity.getSubtitleLayout() != null) {

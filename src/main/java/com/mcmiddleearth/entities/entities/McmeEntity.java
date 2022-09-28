@@ -33,78 +33,78 @@ import java.util.UUID;
 
 public interface McmeEntity extends Entity, InventoryHolder {
 
-    public UUID getUniqueId();
+    UUID getUniqueId();
 
-    public String getName();
+    String getName();
 
-    public Location getLocation();
+    Location getLocation();
 
-    public void setLocation(Location location);
+    void setLocation(Location location);
 
-    public McmeEntityType getMcmeEntityType();
+    McmeEntityType getMcmeEntityType();
 
-    public Vector getVelocity();
+    Vector getVelocity();
 
-    public void setVelocity(Vector velocity);
+    void setVelocity(Vector velocity);
 
-    public Location getTarget();
+    Location getTarget();
 
-    public Goal getGoal();
+    Goal getGoal();
 
-    public void setGoal(Goal goal);
+    void setGoal(Goal goal);
 
-    public void doTick();
+    void doTick();
 
-    public int getEntityId();
+    int getEntityId();
 
-    public int getEntityQuantity();
+    int getEntityQuantity();
 
-    public boolean hasLookUpdate();
+    boolean hasLookUpdate();
 
-    public boolean hasRotationUpdate();
+    boolean hasRotationUpdate();
 
     //public boolean onGround();
 
-    public float getYaw();
-    public float getPitch();
-    public float getRoll();
+    float getYaw();
+    float getPitch();
+    float getRoll();
 
-    public float getHeadYaw();
-    public float getHeadPitch();
+    float getHeadYaw();
+    float getHeadPitch();
 
-    public void setRotation(float yaw);
+    void setRotation(float yaw);
 
-    public void setRotation(float yaw, float pitch, float roll);
+    void setRotation(float yaw, float pitch, float roll);
 
-    public EntityBoundingBox getEntityBoundingBox();
+    EntityBoundingBox getEntityBoundingBox();
 
-    public double getHealth();
-    public void damage(double damage);
-    public void heal(double damage);
-    public boolean isDead();
+    double getHealth();
+    void damage(double damage);
+    void heal(double damage);
+    boolean isDead();
 
-    public boolean isTerminated();
+    boolean isTerminated();
 
-    public void playAnimation(ActionType type);
+    void playAnimation(ActionType type);
 
-    public void receiveAttack(McmeEntity damager, double damage, double knockDownFactor);
-    public void attack(McmeEntity target);
+    void receiveAttack(McmeEntity damager, double damage, double knockDownFactor);
+    void attack(McmeEntity target);
 
-    public Set<McmeEntity> getEnemies();
+    Set<McmeEntity> getEnemies();
 
-    public void finalise();
+    void finalise();
 
-    public Vector getMouth();
+    Vector getMouth();
 
-    public boolean onGround();
+    boolean onGround();
 
-    public MovementType getMovementType();
+    MovementType getMovementType();
 
-    public MovementSpeed getMovementSpeed();
+    MovementSpeed getMovementSpeed();
 
     //public ActionType getActionType();
 
-    public boolean hasId(int entityId);
+    boolean hasId(int entityId);
 
     void setInvisible(boolean visible);
 
@@ -112,562 +112,484 @@ public interface McmeEntity extends Entity, InventoryHolder {
 
     boolean isOnline();
 
-    public void addPotionEffect(PotionEffect effect);
+    void addPotionEffect(PotionEffect effect);
 
-    public void removePotionEffect(PotionEffect effect);
+    void removePotionEffect(PotionEffect effect);
 
-    public void addItem(ItemStack item, EquipmentSlot slot, int slotId);
+    void addItem(ItemStack item, EquipmentSlot slot, int slotId);
 
-    public void removeItem(ItemStack item);
+    void removeItem(ItemStack item);
 
-    public Inventory getInventory();
+    Inventory getInventory();
 
     //default methods for interfaces InventoryHolder and Entity
     @Override
-    public default @Nullable Location getLocation(@Nullable Location loc) {
+    default @Nullable Location getLocation(@Nullable Location loc) {
         return null;
     }
 
     @Override
-    public default double getHeight() {
+    default double getHeight() {
         return 0;
     }
 
     @Override
-    public default double getWidth() {
+    default double getWidth() {
         return 0;
     }
 
     @Override
-    public default @NotNull BoundingBox getBoundingBox() {
+    default @NotNull BoundingBox getBoundingBox() {
         return null;
     }
 
     @Override
-    public default boolean isInWater() {
+    default boolean isInWater() {
         return false;
     }
 
     @Override
-    public default @NotNull World getWorld() {
+    default @NotNull World getWorld() {
         return null;
     }
 
     @Override
-    public default void setRotation(float yaw, float pitch) {
+    default void setRotation(float yaw, float pitch) {
 
     }
 
     @Override
-    public default boolean teleport(@NotNull Location location) {
+    default boolean teleport(@NotNull Location location) {
         return false;
     }
 
     @Override
-    public default boolean teleport(@NotNull Location location, PlayerTeleportEvent.@NotNull TeleportCause cause) {
+    default boolean teleport(@NotNull Location location, PlayerTeleportEvent.@NotNull TeleportCause cause) {
         return false;
     }
 
     @Override
-    public default boolean teleport(@NotNull Entity destination) {
+    default boolean teleport(@NotNull Entity destination) {
         return false;
     }
 
     @Override
-    public default boolean teleport(@NotNull Entity destination, PlayerTeleportEvent.@NotNull TeleportCause cause) {
+    default boolean teleport(@NotNull Entity destination, PlayerTeleportEvent.@NotNull TeleportCause cause) {
         return false;
     }
 
     @Override
-    public default @NotNull List<Entity> getNearbyEntities(double x, double y, double z) {
+    default @NotNull List<Entity> getNearbyEntities(double x, double y, double z) {
         return null;
     }
 
     @Override
-    public default int getFireTicks() {
+    default int getFireTicks() {
         return 0;
     }
 
     @Override
-    public default int getMaxFireTicks() {
+    default int getMaxFireTicks() {
         return 0;
     }
 
     @Override
-    public default void setFireTicks(int ticks) {
+    default void setFireTicks(int ticks) {
 
     }
 
     @Override
-    public default void remove() {
+    default void remove() {
 
     }
 
     @Override
-    public default boolean isValid() {
+    default boolean isValid() {
         return false;
     }
 
     @Override
-    public default void sendMessage(@NotNull String message) {
+    default void sendMessage(@NotNull String message) {
 
     }
 
     @Override
-    public default void sendMessage(@NotNull String[] messages) {
+    default void sendMessage(@NotNull String[] messages) {
 
     }
 
     @Override
-    public default void sendMessage(@Nullable UUID sender, @NotNull String message) {
+    default void sendMessage(@Nullable UUID sender, @NotNull String message) {
 
     }
 
     @Override
-    public default void sendMessage(@Nullable UUID sender, @NotNull String[] messages) {
+    default void sendMessage(@Nullable UUID sender, @NotNull String[] messages) {
 
     }
 
     @Override
-    public default @NotNull Server getServer() {
+    default @NotNull Server getServer() {
         return null;
     }
 
     @Override
-    public default boolean isPersistent() {
+    default boolean isPersistent() {
         return false;
     }
 
     @Override
-    public default void setPersistent(boolean persistent) {
+    default void setPersistent(boolean persistent) {
 
     }
 
     @Override
-    public default @Nullable Entity getPassenger() {
+    default @Nullable Entity getPassenger() {
         return null;
     }
 
     @Override
-    public default boolean setPassenger(@NotNull Entity passenger) {
+    default boolean setPassenger(@NotNull Entity passenger) {
         return false;
     }
 
     @Override
-    public default @NotNull List<Entity> getPassengers() {
+    default @NotNull List<Entity> getPassengers() {
         return null;
     }
 
     @Override
-    public default boolean addPassenger(@NotNull Entity passenger) {
+    default boolean addPassenger(@NotNull Entity passenger) {
         return false;
     }
 
     @Override
-    public default boolean removePassenger(@NotNull Entity passenger) {
+    default boolean removePassenger(@NotNull Entity passenger) {
         return false;
     }
 
     @Override
-    public default boolean isEmpty() {
+    default boolean isEmpty() {
         return false;
     }
 
     @Override
-    public default boolean eject() {
+    default boolean eject() {
         return false;
     }
 
     @Override
-    public default float getFallDistance() {
+    default float getFallDistance() {
         return 0;
     }
 
     @Override
-    public default void setFallDistance(float distance) {
+    default void setFallDistance(float distance) {
 
     }
 
     @Override
-    public default void setLastDamageCause(@Nullable EntityDamageEvent event) {
+    default void setLastDamageCause(@Nullable EntityDamageEvent event) {
 
     }
 
     @Override
-    public default @Nullable EntityDamageEvent getLastDamageCause() {
+    default @Nullable EntityDamageEvent getLastDamageCause() {
         return null;
     }
 
     @Override
-    public default int getTicksLived() {
+    default int getTicksLived() {
         return 0;
     }
 
     @Override
-    public default void setTicksLived(int value) {
+    default void setTicksLived(int value) {
 
     }
 
     @Override
-    public default void playEffect(@NotNull EntityEffect type) {
+    default void playEffect(@NotNull EntityEffect type) {
 
     }
 
     @Override
-    public default @NotNull EntityType getType() {
+    default @NotNull EntityType getType() {
         return null;
     }
 
     @Override
-    public default boolean isInsideVehicle() {
+    default boolean isInsideVehicle() {
         return false;
     }
 
     @Override
-    public default boolean leaveVehicle() {
+    default boolean leaveVehicle() {
         return false;
     }
 
     @Override
-    public default @Nullable Entity getVehicle() {
+    default @Nullable Entity getVehicle() {
         return null;
     }
 
     @Override
-    public default void setCustomNameVisible(boolean flag) {
+    default void setCustomNameVisible(boolean flag) {
 
     }
 
     @Override
-    public default boolean isCustomNameVisible() {
+    default boolean isCustomNameVisible() {
         return false;
     }
 
     @Override
-    public default void setGlowing(boolean flag) {
+    default void setGlowing(boolean flag) {
 
     }
 
     @Override
-    public default boolean isGlowing() {
+    default boolean isGlowing() {
         return false;
     }
 
     @Override
-    public default void setInvulnerable(boolean flag) {
+    default void setInvulnerable(boolean flag) {
 
     }
 
     @Override
-    public default boolean isInvulnerable() {
+    default boolean isInvulnerable() {
         return false;
     }
 
     @Override
-    public default boolean isSilent() {
+    default boolean isSilent() {
         return false;
     }
 
     @Override
-    public default void setSilent(boolean flag) {
+    default void setSilent(boolean flag) {
 
     }
 
     @Override
-    public default boolean hasGravity() {
+    default boolean hasGravity() {
         return false;
     }
 
     @Override
-    public default void setGravity(boolean gravity) {
+    default void setGravity(boolean gravity) {
 
     }
 
     @Override
-    public default int getPortalCooldown() {
+    default int getPortalCooldown() {
         return 0;
     }
 
     @Override
-    public default void setPortalCooldown(int cooldown) {
+    default void setPortalCooldown(int cooldown) {
 
     }
 
     @Override
-    public default @NotNull Set<String> getScoreboardTags() {
+    default @NotNull Set<String> getScoreboardTags() {
         return null;
     }
 
     @Override
-    public default boolean addScoreboardTag(@NotNull String tag) {
+    default boolean addScoreboardTag(@NotNull String tag) {
         return false;
     }
 
     @Override
-    public default boolean removeScoreboardTag(@NotNull String tag) {
+    default boolean removeScoreboardTag(@NotNull String tag) {
         return false;
     }
 
     @Override
-    public default @NotNull PistonMoveReaction getPistonMoveReaction() {
+    default @NotNull PistonMoveReaction getPistonMoveReaction() {
         return null;
     }
 
     @Override
-    public default @NotNull BlockFace getFacing() {
+    default @NotNull BlockFace getFacing() {
         return null;
     }
 
     @Override
-    public default @NotNull Pose getPose() {
+    default @NotNull Pose getPose() {
         return null;
     }
 
     @Override
-    public default @NotNull Spigot spigot() {
+    default @NotNull Spigot spigot() {
         return null;
     }
 
     @Override
-    public default @Nullable Location getOrigin() {
+    default @Nullable Location getOrigin() {
         return null;
     }
 
     @Override
-    public default boolean fromMobSpawner() {
+    default boolean fromMobSpawner() {
         return false;
     }
 
     @Override
-    public default @NotNull Chunk getChunk() {
+    default @NotNull Chunk getChunk() {
         return null;
     }
 
     @Override
-    public default CreatureSpawnEvent.@NotNull SpawnReason getEntitySpawnReason() {
+    default CreatureSpawnEvent.@NotNull SpawnReason getEntitySpawnReason() {
         return null;
     }
 
     @Override
-    public default boolean isInRain() {
+    default boolean isInRain() {
         return false;
     }
 
     @Override
-    public default boolean isInBubbleColumn() {
+    default boolean isInBubbleColumn() {
         return false;
     }
 
     @Override
-    public default boolean isInWaterOrRain() {
+    default boolean isInWaterOrRain() {
         return false;
     }
 
     @Override
-    public default boolean isInWaterOrBubbleColumn() {
+    default boolean isInWaterOrBubbleColumn() {
         return false;
     }
 
     @Override
-    public default boolean isInWaterOrRainOrBubbleColumn() {
+    default boolean isInWaterOrRainOrBubbleColumn() {
         return false;
     }
 
     @Override
-    public default boolean isInLava() {
+    default boolean isInLava() {
         return false;
     }
 
     @Override
-    public default boolean isTicking() {
+    default boolean isTicking() {
         return false;
     }
 
     @Override
-    public default @Nullable Component customName() {
+    default @Nullable Component customName() {
         return null;
     }
 
     @Override
-    public default void customName(@Nullable Component customName) {
+    default void customName(@Nullable Component customName) {
 
     }
 
     @Override
-    public default @Nullable String getCustomName() {
+    default @Nullable String getCustomName() {
         return null;
     }
 
     @Override
-    public default void setCustomName(@Nullable String name) {
+    default void setCustomName(@Nullable String name) {
 
     }
 
     @Override
-    public default void setMetadata(@NotNull String metadataKey, @NotNull MetadataValue newMetadataValue) {
+    default void setMetadata(@NotNull String metadataKey, @NotNull MetadataValue newMetadataValue) {
 
     }
 
     @Override
-    public default @NotNull List<MetadataValue> getMetadata(@NotNull String metadataKey) {
+    default @NotNull List<MetadataValue> getMetadata(@NotNull String metadataKey) {
         return null;
     }
 
     @Override
-    public default boolean hasMetadata(@NotNull String metadataKey) {
+    default boolean hasMetadata(@NotNull String metadataKey) {
         return false;
     }
 
     @Override
-    public default void removeMetadata(@NotNull String metadataKey, @NotNull Plugin owningPlugin) {
+    default void removeMetadata(@NotNull String metadataKey, @NotNull Plugin owningPlugin) {
 
     }
 
     @Override
-    public default boolean isPermissionSet(@NotNull String name) {
+    default boolean isPermissionSet(@NotNull String name) {
         return false;
     }
 
     @Override
-    public default boolean isPermissionSet(@NotNull Permission perm) {
+    default boolean isPermissionSet(@NotNull Permission perm) {
         return false;
     }
 
     @Override
-    public default boolean hasPermission(@NotNull String name) {
+    default boolean hasPermission(@NotNull String name) {
         return false;
     }
 
     @Override
-    public default boolean hasPermission(@NotNull Permission perm) {
+    default boolean hasPermission(@NotNull Permission perm) {
         return false;
     }
 
     @Override
-    public default @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value) {
+    default @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value) {
         return null;
     }
 
     @Override
-    public default @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin) {
+    default @NotNull PermissionAttachment addAttachment(@NotNull Plugin plugin) {
         return null;
     }
 
     @Override
-    public default @Nullable PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value, int ticks) {
+    default @Nullable PermissionAttachment addAttachment(@NotNull Plugin plugin, @NotNull String name, boolean value, int ticks) {
         return null;
     }
 
     @Override
-    public default @Nullable PermissionAttachment addAttachment(@NotNull Plugin plugin, int ticks) {
+    default @Nullable PermissionAttachment addAttachment(@NotNull Plugin plugin, int ticks) {
         return null;
     }
 
     @Override
-    public default void removeAttachment(@NotNull PermissionAttachment attachment) {
+    default void removeAttachment(@NotNull PermissionAttachment attachment) {
 
     }
 
     @Override
-    public default void recalculatePermissions() {
+    default void recalculatePermissions() {
 
     }
 
     @Override
-    public default @NotNull Set<PermissionAttachmentInfo> getEffectivePermissions() {
+    default @NotNull Set<PermissionAttachmentInfo> getEffectivePermissions() {
         return null;
     }
 
     @Override
-    public default boolean isOp() {
+    default boolean isOp() {
         return false;
     }
 
     @Override
-    public default void setOp(boolean value) {
+    default void setOp(boolean value) {
 
     }
 
     @Override
-    public default @NotNull PersistentDataContainer getPersistentDataContainer() {
-        return null;
-    }
-
-    @Override
-    default boolean isOnGround() {
-        return false;
-    }
-
-    @Override
-    default void setVisualFire(boolean fire) {
-
-    }
-
-    @Override
-    default boolean isVisualFire() {
-        return false;
-    }
-
-    @Override
-    default int getFreezeTicks() {
-        return 0;
-    }
-
-    @Override
-    default int getMaxFreezeTicks() {
-        return 0;
-    }
-
-    @Override
-    default void setFreezeTicks(int ticks) {
-
-    }
-
-    @Override
-    default boolean isFrozen() {
-        return false;
-    }
-
-    @Override
-    default boolean isFreezeTickingLocked() {
-        return false;
-    }
-
-    @Override
-    default void lockFreezeTicks(boolean locked) {
-
-    }
-
-    @Override
-    default @NotNull SpawnCategory getSpawnCategory() {
-        return null;
-    }
-
-    @Override
-    @NotNull
-    default Component teamDisplayName() {
-        return null;
-    }
-
-    @Override
-    @NotNull
-    default Set<Player> getTrackedPlayers() {
-        return null;
-    }
-
-    @Override
-    default boolean spawnAt(@NotNull Location location, CreatureSpawnEvent.@NotNull SpawnReason reason) {
-        return false;
-    }
-
-    @Override
-    default boolean isInPowderedSnow() {
-        return false;
-    }
-
-    @Override
-    @NotNull
-    default Component name() {
+    default @NotNull PersistentDataContainer getPersistentDataContainer() {
         return null;
     }
 }

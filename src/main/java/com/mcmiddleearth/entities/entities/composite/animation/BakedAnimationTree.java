@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.entities.composite.animation;
 
 import com.google.common.base.Joiner;
+import com.mcmiddleearth.entities.ai.goal.GoalType;
 import com.mcmiddleearth.entities.ai.goal.GoalWatchEntityConversation;
 import com.mcmiddleearth.entities.api.ActionType;
 import com.mcmiddleearth.entities.api.MovementSpeed;
@@ -24,8 +25,8 @@ public class BakedAnimationTree {
 
     public void addAnimation(String path, BakedAnimation animation) {
         String[] pathArray = path.split("\\.");
-        addAnimation(pathArray,animation);
-        for(int i = 0; i < pathArray.length; i++) {
+        addAnimation(pathArray, animation);
+        for (int i = 0; i < pathArray.length; i++) {
             try {
                 String[] temp = pathArray.clone();
                 MovementSpeed speed = MovementSpeed.valueOf(temp[i].toUpperCase());
@@ -41,12 +42,13 @@ public class BakedAnimationTree {
                         break;
                 }
                 addBackwardFallbackAnimation(temp, animation);
-            } catch (IllegalArgumentException ignore) {}
+            } catch (IllegalArgumentException ignore) {
+            }
         }
     }
 
     private void addBackwardFallbackAnimation(String[] path, BakedAnimation animation) {
-        if(getAnimation(path) == null) {
+        if (getAnimation(path) == null) {
             String name = Joiner.on('.').join(path);
             // FIXME: This will generate non-unique names for the reverse animations. I do not care.
             addAnimation(path, animation.getReverse(name, name));
@@ -97,7 +99,8 @@ public class BakedAnimationTree {
                 entity.getMovementType().name().toLowerCase(),
                 entity.getMovementSpeedAnimation().name().toLowerCase(),
                 //TODO Find a batter way of doing this, recode this part to allow goals to change the ActionType
-                entity.getGoal() instanceof GoalWatchEntityConversation ? ActionType.CONV.name().toLowerCase() : ActionType.IDLE.name().toLowerCase()
+                entity.getGoal().getType() == GoalType.WATCH_ENTITY_CONVERSATION ? ActionType.CONV.name().toLowerCase() :
+                        entity.getGoal().getType() == GoalType.WATCH_ENTITY_CHEERING ? ActionType.CHEERING.name().toLowerCase() : ActionType.IDLE.name().toLowerCase()
         };
         SearchResult searchResult = searchAnimation(path);
         return searchResult.getBestMatch();

@@ -79,7 +79,7 @@ public class SelectCommand extends McmeEntitiesCommandHandler {
     private int showSelection(McmeCommandSender sender) {
         sender.sendMessage(new ComponentBuilder("Selected Entities:").create());
         ((BukkitCommandSender) sender).getSelectedEntities().forEach(entity
-                -> sender.sendMessage(new ComponentBuilder(entity.getEntityId() + " " + entity.getName() + " "
+                -> sender.sendMessage(new ComponentBuilder(entity.getEntityId() + " " + (entity.getName().isEmpty() ? "Unnamed" : entity.getName()) + " @ "
                 + entity.getLocation().getBlockX() + " " + entity.getLocation().getBlockY() + " " + entity.getLocation().getBlockZ()).create()));
         return 0;
     }
@@ -105,7 +105,8 @@ public class SelectCommand extends McmeEntitiesCommandHandler {
         McmeEntity entity = ((BukkitCommandSender) sender).getSelectedEntities().stream().findFirst().orElse(null);
         if (entity != null) {
             ((BukkitCommandSender) sender).setSelectedTargetEntity(entity);
-            sender.sendMessage(new ComponentBuilder("Saved as target entity:  " + entity.getName() + " "
+            entity.getName();
+            sender.sendMessage(new ComponentBuilder("Saved as target entity: " + (entity.getName().isEmpty() ? "Unnamed" : entity.getName()) + " @ "
                     + entity.getLocation().getBlockX() + " " + entity.getLocation().getBlockY() + " " + entity.getLocation().getBlockZ()).create());
         } else {
             sender.sendMessage(new ComponentBuilder("You need to select an entity first.").create());

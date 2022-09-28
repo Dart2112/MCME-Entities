@@ -153,14 +153,14 @@ public class SyncEntityServer implements EntityServer {
     public void removeEntity(McmeEntity entity) {
 //Logger.getGlobal().info("Server: remove Entity");
         if(!(entity instanceof SpeechBalloonEntity)) {
-            handleEvent(new McmeEntityRemoveEvent((McmeEntity) entity));
+            handleEvent(new McmeEntityRemoveEvent(entity));
         }
         if(entity instanceof VirtualEntity) {
             ((VirtualEntity)entity).removeAllViewers();
         }
-        ((McmeEntity)entity).finalise();
-        entityProvider.removeEntity((McmeEntity)entity);
-        playerProvider.getMcmePlayers().forEach(player -> player.removeFromSelectedEntities((McmeEntity)entity));
+        entity.finalise();
+        entityProvider.removeEntity(entity);
+        playerProvider.getMcmePlayers().forEach(player -> player.removeFromSelectedEntities(entity));
     }
 
     @Override

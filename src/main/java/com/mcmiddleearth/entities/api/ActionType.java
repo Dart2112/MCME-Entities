@@ -7,5 +7,6 @@ public enum ActionType {
     HURT,
     DEATH,
     IDLE,
-    CONV
+    CONV,
+    CHEERING
 }

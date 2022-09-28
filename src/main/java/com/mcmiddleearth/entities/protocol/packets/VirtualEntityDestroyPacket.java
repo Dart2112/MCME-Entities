@@ -15,12 +15,7 @@ public class VirtualEntityDestroyPacket extends AbstractPacket {
 
     public VirtualEntityDestroyPacket(int... entityId) {
         destroy = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
-        List<Integer> idList = new ArrayList<>();
-        Arrays.stream(entityId).forEach(idList::add);
-        destroy.getIntLists().write(0, idList);
-        //destroy.getIntegerArrays().write(0, entityId);
-//Logger.getGlobal().info("create destroy to : ");
-//Arrays.stream(entityId).forEach(eid -> Logger.getGlobal().info("eid: "+eid));
+        destroy.getIntegerArrays().write(0, entityId);
     }
 
     @Override
