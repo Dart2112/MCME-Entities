@@ -99,8 +99,9 @@ public class BakedAnimationTree {
                 entity.getMovementType().name().toLowerCase(),
                 entity.getMovementSpeedAnimation().name().toLowerCase(),
                 //TODO Find a batter way of doing this, recode this part to allow goals to change the ActionType
-                entity.getGoal().getType() == GoalType.WATCH_ENTITY_CONVERSATION ? ActionType.CONV.name().toLowerCase() :
-                        entity.getGoal().getType() == GoalType.WATCH_ENTITY_CHEERING ? ActionType.CHEERING.name().toLowerCase() : ActionType.IDLE.name().toLowerCase()
+                entity.getGoal() == null ? ActionType.IDLE.name().toLowerCase() :
+                        (entity.getGoal().getType() == GoalType.WATCH_ENTITY_CONVERSATION ? ActionType.CONV.name().toLowerCase() :
+                                entity.getGoal().getType() == GoalType.WATCH_ENTITY_CHEERING ? ActionType.CHEERING.name().toLowerCase() : ActionType.IDLE.name().toLowerCase())
         };
         SearchResult searchResult = searchAnimation(path);
         return searchResult.getBestMatch();

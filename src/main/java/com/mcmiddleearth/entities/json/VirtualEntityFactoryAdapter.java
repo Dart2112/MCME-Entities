@@ -132,7 +132,7 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
         }
 
         //TODO Serialization for Speech balloon is not currently working, it's not closing the object.
-        if (writeDefaults || !factory.getSubtitleLayout().equals(defaults.getSpeechBalloonLayout())) {
+        if ((writeDefaults && defaults.getSpeechBalloonLayout() != null) || (factory.getSubtitleLayout() != null && !factory.getSubtitleLayout().equals(defaults.getSpeechBalloonLayout()))) {
             out.name(SUBTITLE).beginObject();
 
             SpeechBalloonLayout layout = factory.getSubtitleLayout();
