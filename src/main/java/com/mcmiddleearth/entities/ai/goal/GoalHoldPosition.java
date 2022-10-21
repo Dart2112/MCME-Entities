@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.ai.goal;
 
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalStare;
+import com.mcmiddleearth.entities.api.MovementSpeed;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import org.bukkit.Location;
@@ -13,6 +14,8 @@ public class GoalHoldPosition extends GoalVirtualEntity {
 
     public GoalHoldPosition(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
+
+        movementSpeed = MovementSpeed.STAND;
 
         this.targetLocation = factory.getTargetLocation();
 

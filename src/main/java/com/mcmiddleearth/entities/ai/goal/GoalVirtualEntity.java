@@ -28,7 +28,7 @@ public abstract class GoalVirtualEntity implements Goal {
     private int headGoalTicks = 0;
     private float currentDurationFactor = 1;
 
-    protected final static Random random = new Random();
+    protected static final Random random = new Random();
 
     private int updateInterval = 10;
 
@@ -220,12 +220,11 @@ public abstract class GoalVirtualEntity implements Goal {
     }
 
     public VirtualEntityGoalFactory getFactory() {
-        VirtualEntityGoalFactory factory = new VirtualEntityGoalFactory(type)
+        return new VirtualEntityGoalFactory(type)
                 .withTargetEntity(entity)
                 .withHeadGoals(headGoals)
                 .withUpdateInterval(updateInterval)
                 .withMovementSpeed(movementSpeed);
-        return factory;
     }
 
     @Override

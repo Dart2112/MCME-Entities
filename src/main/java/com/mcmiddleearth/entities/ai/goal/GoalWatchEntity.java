@@ -7,10 +7,9 @@ import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.McmeEntity;
 import com.mcmiddleearth.entities.entities.Placeholder;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
+import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
-
-import java.util.UUID;
 
 public class GoalWatchEntity extends GoalVirtualEntity {
 
@@ -24,48 +23,74 @@ public class GoalWatchEntity extends GoalVirtualEntity {
         super(entity, factory);
         this.target = factory.getTargetEntity();
         if (this.target instanceof Placeholder) {
-            targetIncomplete = true;
+            this.targetIncomplete = true;
         }
-        movementSpeed = MovementSpeed.STAND;
+        this.movementSpeed = MovementSpeed.STAND;
+        this.clearHeadGoals();
 
-        if (this.target == null) return;
+        if (this.target == null || !this.target.isOnline()) {
+            return;
+        }
 
-       this.headGoalWatch = new HeadGoalWatch(target, getEntity());
+        this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
 
-        clearHeadGoals();
-        addHeadGoal(headGoalWatch);
+        this.addHeadGoal(this.headGoalWatch);
     }
 
     @Override
     public void update() {
+
         super.update();
-        if(target != null) {
-            this.uniqueId = target.getUniqueId();
+        if (this.target != null) {
+            this.uniqueId = this.target.getUniqueId();
         }
 
-        if (targetIncomplete) {
-            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(uniqueId);
+        if (this.uniqueId == null) {
+            return;
+        }
+
+        if (this.targetIncomplete) {
+            final McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(this.uniqueId);
             if (search != null) {
-                target = search;
-                targetIncomplete = false;
-                headGoalWatch.setTarget(target);
+                this.target = search;
+                this.targetIncomplete = false;
+
+                if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
+                    this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
+                    this.addHeadGoal(this.headGoalWatch);
+                }
+
+                this.headGoalWatch.setTarget(this.target);
             }
         }
 
-        if (target == null || !target.isOnline() || target.isDead()) {
+        if (this.target == null || !this.target.isOnline() || this.target.isDead()) {
             this.targetIncomplete = true;
             return;
         }
 
-        if (!targetIncomplete) {
-            if (tickCounter % 3 == 0) {
-                Location orientation = getEntity().getLocation().clone()
-                        .setDirection(target.getLocation().toVector().subtract(getEntity().getLocation().toVector()));
-                setYaw(orientation.getYaw());
-                setPitch(orientation.getPitch());
-                tickCounter = 0;
+        if (!this.targetIncomplete) {
+            if (this.tickCounter % 3 == 0) {
+                final Location location = this.getEntity().getLocation().clone();
+                final Location targetLocation = this.target.getLocation().clone();
+
+                final Location orientation = location.setDirection(
+                    targetLocation.toVector().subtract(
+                        location.toVector()
+                    )
+                );
+                this.setYaw(orientation.getYaw());
+                this.setPitch(orientation.getPitch());
+                this.tickCounter = 0;
+
+                if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
+                    this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
+                    this.addHeadGoal(this.headGoalWatch);
+                }
+
+                this.headGoalWatch.setTarget(this.target);
             }
-            tickCounter++;
+            this.tickCounter++;
         }
     }
 
@@ -87,6 +112,6 @@ public class GoalWatchEntity extends GoalVirtualEntity {
 
     @Override
     public VirtualEntityGoalFactory getFactory() {
-        return super.getFactory().withTargetEntity(target);
+        return super.getFactory().withTargetEntity(this.target);
     }
 }

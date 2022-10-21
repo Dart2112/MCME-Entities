@@ -21,47 +21,47 @@ public class GoalWatchNearestEntity extends GoalWatchEntity {
 
     public GoalWatchNearestEntity(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
-        selectTarget();
+
+        this.clearHeadGoals();
+        this.selectTarget();
     }
 
     @Override
     public void update() {
-        selectTarget();
+        this.selectTarget();
         super.update();
     }
 
+    @SuppressWarnings("all")
     private void selectTarget() {
-        targetIncomplete = false;
+        this.targetIncomplete = false;
 
-        final Location entityLocation = getEntity().getLocation();
-        Collection<Player> nearbyPlayers = getEntity().getLocation().getWorld()
-                .getNearbyEntities(entityLocation, 10, 10, 10, entity -> entity instanceof Player)
+        final Location entityLocation = this.getEntity().getLocation();
+        final Collection<Player> nearbyPlayers = this.getEntity().getLocation().getWorld()
+                .getNearbyEntities(entityLocation, 10, 10, 10, Player.class::isInstance)
                 .stream()
-                .map(entity -> (Player) entity)
+                .map(Player.class::cast)
                 .collect(Collectors.toList());
 
-        if (nearbyPlayers.size() == 1 && this.target != null && this.target.isOnline()) {
+        if (nearbyPlayers.size() == 1 && this.target != null && this.target.isOnline() && this.target.getLocation() != null) {
             return;
         }
 
-        Optional<Player> playerOptional = nearbyPlayers.stream()
+        final Optional<Player> playerOptional = nearbyPlayers.stream()
                 .min(Comparator.comparingDouble(o -> o.getLocation().distanceSquared(entityLocation)));
         if(!playerOptional.isPresent()) {
             this.target = null;
-            targetIncomplete = true;
+            this.targetIncomplete = true;
             return;
         }
 
-        Player player = playerOptional.get();
-        McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(player.getUniqueId());
+        final Player player = playerOptional.get();
+        final McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(player.getUniqueId());
         if (search != null) {
-            if (target != null && target.getUniqueId().equals(search.getUniqueId())) return;
+            if (this.target != null && this.target.getUniqueId().equals(search.getUniqueId())) return;
 
-            target = search;
-            if(headGoalWatch == null) {
-                this.headGoalWatch = new HeadGoalWatch(target, getEntity());
-            }
-            headGoalWatch.setTarget(target);
+            this.target = search;
+            this.targetIncomplete = false;
         }
     }
 }

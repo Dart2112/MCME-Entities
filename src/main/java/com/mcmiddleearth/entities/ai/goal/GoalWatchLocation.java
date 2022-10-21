@@ -2,6 +2,7 @@ package com.mcmiddleearth.entities.ai.goal;
 
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalLook;
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalStare;
+import com.mcmiddleearth.entities.api.MovementSpeed;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import org.bukkit.Location;
@@ -14,16 +15,16 @@ public class GoalWatchLocation extends GoalVirtualEntity {
     public GoalWatchLocation(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
 
-        targetLocation = factory.getTargetLocation();
+        this.targetLocation = factory.getTargetLocation();
+        this.movementSpeed = MovementSpeed.STAND;
 
+        final Location location = entity.getLocation().clone();
+        final Location orientation = location.setDirection(this.targetLocation.toVector().subtract(location.toVector()));
 
-        Location location = entity.getLocation().clone();
-        Location orientation = location.setDirection(targetLocation.toVector().subtract(location.toVector()));
+        this.setYaw(orientation.getYaw());
+        this.setPitch(orientation.getPitch());
 
-        setYaw(orientation.getYaw());
-        setPitch(orientation.getPitch());
-
-        setDefaultHeadGoal();
+        this.setDefaultHeadGoal();
     }
 
     @Override
@@ -32,13 +33,13 @@ public class GoalWatchLocation extends GoalVirtualEntity {
     }
 
     public void setDefaultHeadGoal() {
-        clearHeadGoals();
-        addHeadGoal(new HeadGoalLook(targetLocation, getEntity()));
+        this.clearHeadGoals();
+        this.addHeadGoal(new HeadGoalLook(this.targetLocation, this.getEntity()));
     }
 
     @Override
     public VirtualEntityGoalFactory getFactory() {
-        return super.getFactory().withTargetLocation(targetLocation);
+        return super.getFactory().withTargetLocation(this.targetLocation);
     }
 
 }

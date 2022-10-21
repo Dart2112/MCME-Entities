@@ -2,7 +2,6 @@ package com.mcmiddleearth.entities.entities.composite.animation;
 
 import com.google.common.base.Joiner;
 import com.mcmiddleearth.entities.ai.goal.GoalType;
-import com.mcmiddleearth.entities.ai.goal.GoalWatchEntityConversation;
 import com.mcmiddleearth.entities.api.ActionType;
 import com.mcmiddleearth.entities.api.MovementSpeed;
 import com.mcmiddleearth.entities.entities.composite.BakedAnimationEntity;

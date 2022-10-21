@@ -20,7 +20,7 @@ public class HeadGoalLook extends HeadGoal {
 
     public HeadGoalLook(Location target, McmeEntity entity, int duration) {
         this(target, entity);
-        setDuration(duration);
+        this.setDuration(duration);
     }
 
     public void setEntity(VirtualEntity entity) {
@@ -29,21 +29,21 @@ public class HeadGoalLook extends HeadGoal {
 
     @Override
     public void doTick() {
-        if(entity instanceof Placeholder) {
-            McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(entity.getUniqueId());
+        if(this.entity instanceof Placeholder) {
+            final McmeEntity search = EntitiesPlugin.getEntityServer().getEntity(this.entity.getUniqueId());
             if(search != null) {
-                entity = search;
+                this.entity = search;
             }
         }
-        Location targetDir = entity.getLocation().clone()
-                .setDirection(target.toVector()
-                        .subtract(entity.getLocation().toVector()));
-        yaw = targetDir.getYaw();
-        pitch = targetDir.getPitch();
+        final Location targetDir = this.entity.getLocation().clone()
+                .setDirection(this.target.toVector()
+                        .subtract(this.entity.getLocation().toVector()));
+        this.yaw = targetDir.getYaw();
+        this.pitch = targetDir.getPitch();
     }
 
     public Location getTarget() {
-        return target;
+        return this.target;
     }
 
     @Override

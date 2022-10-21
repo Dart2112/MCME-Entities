@@ -19,7 +19,7 @@ public class HeadGoalWatch extends HeadGoal {
 
     public HeadGoalWatch(McmeEntity target, McmeEntity entity, int duration) {
         this(target, entity);
-        setDuration(duration);
+        this.setDuration(duration);
     }
 
     public void setEntity(VirtualEntity entity) {
@@ -32,17 +32,22 @@ public class HeadGoalWatch extends HeadGoal {
 
     @Override
     public void doTick() {
-        if(target != null && !(target instanceof Placeholder)) {
-            Location targetDir = entity.getLocation().clone()
-                    .setDirection(target.getLocation().toVector()
-                            .subtract(entity.getLocation().toVector()));
-            yaw = targetDir.getYaw();
-            pitch = targetDir.getPitch();
+        if(this.target != null && !(this.target instanceof Placeholder)) {
+            final Location location = this.entity.getLocation().clone();
+            final Location targetLocation = this.target.getLocation().clone();
+
+            final Location orientation = location.setDirection(
+                targetLocation.toVector().subtract(
+                    location.toVector()
+                )
+            );
+            this.yaw = orientation.getYaw();
+            this.pitch = orientation.getPitch();
         }
     }
 
     public McmeEntity getTarget() {
-        return target;
+        return this.target;
     }
 
     @Override

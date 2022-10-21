@@ -9,17 +9,17 @@ public abstract class HeadGoal {
     protected float yaw, pitch;
 
     public float getHeadYaw() {
-        return yaw;
+        return this.yaw;
     }
 
     public float getHeadPitch() {
-        return pitch;
+        return this.pitch;
     }
 
     public boolean hasHeadRotation() {return true; }
 
     public int getDuration() {
-        return duration;
+        return this.duration;
     }
 
     public void setDuration(int duration) {

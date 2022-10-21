@@ -101,6 +101,11 @@ public class VirtualEntityUseListener extends EntityListener {
                     break;
                 case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, virtualEntity, hand, isSneaking));
+
+                    System.out.println("Head Pitch: " + virtualEntity.getHeadPitch());
+                    System.out.println("Head Yaw: " + virtualEntity.getHeadYaw());
+                    System.out.println("Roll: " + virtualEntity.getRoll());
+
                     if (virtualEntity.getTriggeredSound() != null) {
                         Location location = virtualEntity.getLocation();
                         Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
