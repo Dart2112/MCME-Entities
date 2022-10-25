@@ -8,5 +8,5 @@ public enum ActionType {
     DEATH,
     IDLE,
     CONV,
-    CHEERING
+    CHEER
 }

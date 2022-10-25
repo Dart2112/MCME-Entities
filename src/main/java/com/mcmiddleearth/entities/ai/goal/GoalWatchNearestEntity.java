@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class GoalWatchNearestEntity extends GoalWatchEntity {
 
+    //TODO MAKE THE MOVEMENT OF THE HEAD ALSO AFFECT THE BODY
     public GoalWatchNearestEntity(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
 

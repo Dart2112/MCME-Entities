@@ -1,23 +1,22 @@
 package com.mcmiddleearth.entities.entities.composite;
 
 import com.mcmiddleearth.entities.api.McmeEntityType;
-import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.api.VirtualEntityFactory;
+import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.entities.composite.bones.BoneThreeAxis;
 import com.mcmiddleearth.entities.entities.composite.bones.BoneTwoAxis;
 import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
-import com.mcmiddleearth.entities.protocol.packets.*;
+import com.mcmiddleearth.entities.protocol.packets.VirtualEntityDestroyPacket;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntityMovePacket;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntitySpawnPacket;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntityTeleportPacket;
+import java.util.HashSet;
+import java.util.Set;
 import org.bukkit.Location;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public abstract class CompositeEntity extends VirtualEntity {
 
@@ -43,7 +42,7 @@ public abstract class CompositeEntity extends VirtualEntity {
     protected RotationMode rotationMode;
 
     public CompositeEntity(int entityId, VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
-        this(entityId,factory, RotationMode.YAW);
+        this(entityId, factory, RotationMode.YAW);
     }
 
     protected CompositeEntity(int entityId, VirtualEntityFactory factory,
@@ -58,7 +57,7 @@ public abstract class CompositeEntity extends VirtualEntity {
         currentHeadYaw = getHeadYaw();
         currentHeadPitch = getHeadPitch();
         displayNamePosition = factory.getDisplayNamePosition().clone();
-        if(getDisplayName()!=null) {
+        if (getDisplayName() != null) {
             createDisplayBone();
         }
     }
@@ -66,14 +65,14 @@ public abstract class CompositeEntity extends VirtualEntity {
     protected CompositeEntity(int entityId, McmeEntityType type, Location location) {
         super(type, location);
         firstEntityId = entityId;
-        headPitchCenter = new Vector(0,0,0);
+        headPitchCenter = new Vector(0, 0, 0);
     }
 
     protected void createPackets() {
         spawnPacket = new CompositeEntitySpawnPacket(this);
         int[] ids = new int[bones.size()];
-        for(int i = 0; i < bones.size(); i++) {
-            ids[i] = firstEntityId+i;
+        for (int i = 0; i < bones.size(); i++) {
+            ids[i] = firstEntityId + i;
         }
         removePacket = new VirtualEntityDestroyPacket(ids);
         teleportPacket = new CompositeEntityTeleportPacket(this);
@@ -84,10 +83,12 @@ public abstract class CompositeEntity extends VirtualEntity {
     private void createDisplayBone() {
         if (rotationMode.equals(RotationMode.YAW_PITCH_ROLL)) {
             displayNameBone = new BoneThreeAxis("displayName", this, new EulerAngle(0, 0, 0),
-                    displayNamePosition, null, false, 0);
+                displayNamePosition, null, false, 0
+            );
         } else {
             displayNameBone = new Bone("displayName", this, new EulerAngle(0, 0, 0),
-                    displayNamePosition, null, false, 0);
+                displayNamePosition, null, false, 0
+            );
         }
         displayNameBone.setDisplayName(getDisplayName());
         bones.add(displayNameBone);
@@ -118,22 +119,22 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     @Override
     public void move() {
         checkHeadYaw();
-        if(hasRotationUpdate()) {
+        if (hasRotationUpdate()) {
             updateBodyBones();
         }
-        if(hasLookUpdate()) {
+        if (hasLookUpdate()) {
             updateHeadBones();
         }
-//Logger.getGlobal().info("Rotation: "+hasRotationUpdate()+" "+getLocation().getYaw() +" "+currentYaw);
-//Logger.getGlobal().info("Head Yaw: "+currentHeadYaw+" "+currentPitch+" "+getVelocity().toString());
-        bones.forEach(bone -> bone.move());
+        //Logger.getGlobal().info("Rotation: "+hasRotationUpdate()+" "+getLocation().getYaw() +" "+currentYaw);
+        //Logger.getGlobal().info("Head Yaw: "+currentHeadYaw+" "+currentPitch+" "+getVelocity().toString());
+        bones.forEach(Bone::move);
         super.move();
         bones.forEach(Bone::resetUpdateFlags);
     }
 
     @Override
     public void teleport() {
-//Logger.getGlobal().info("Composite teleport method");
+        //Logger.getGlobal().info("Composite teleport method");
         checkHeadYaw();
         updateBodyBones();
         updateHeadBones();
@@ -143,32 +144,30 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     }
 
     protected void updateBodyBones() {
-        currentYaw = turn(currentYaw,getLocation().getYaw(),maxRotationStep);
-        bones.stream().filter(bone->!bone.isHeadBone()).forEach(bone-> {
-            bone.setRotation(currentYaw);
-        });
+        currentYaw = turn(currentYaw, getYaw(), maxRotationStep);
+        bones.stream().filter(bone -> !bone.isHeadBone()).forEach(bone -> bone.setRotation(currentYaw));
     }
 
     private void updateHeadBones() {
-        currentHeadYaw = turn(currentHeadYaw, getHeadYaw(),maxRotationStep);
-        currentHeadPitch = turn(currentHeadPitch,getHeadPitch(),maxRotationStep);
-        bones.stream().filter(bone -> (bone instanceof  BoneTwoAxis) && bone.isHeadBone()).forEach(bone-> {
+        currentHeadYaw = turn(currentHeadYaw, getHeadYaw(), maxRotationStep);
+        currentHeadPitch = turn(currentHeadPitch, getHeadPitch(), maxRotationStep);
+        bones.stream().filter(bone -> (bone instanceof BoneTwoAxis) && bone.isHeadBone()).forEach(bone -> {
             bone.setRotation(currentHeadYaw);
-            ((BoneTwoAxis)bone).setPitch(currentHeadPitch);
+            ((BoneTwoAxis) bone).setPitch(currentHeadPitch);
         });
     }
 
     protected float turn(float currentAngle, float aimAngle, float maxStep) {
         float diff = aimAngle - currentAngle;
-        while(diff < -180) {
+        while (diff < -180) {
             diff += 360;
         }
-        while(diff > 180) {
+        while (diff > 180) {
             diff -= 360;
         }
-        if(Math.abs(diff)<maxStep) {
+        if (Math.abs(diff) < maxStep) {
             return aimAngle;
-        } else if(diff<0) {
+        } else if (diff < 0) {
             return currentAngle - maxStep;
         } else {
             return currentAngle + maxStep;
@@ -176,30 +175,29 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     }
 
     private void checkHeadYaw() {
-        float diff = getHeadYaw() - getLocation().getYaw();
-        while(diff < -180) {
+        float diff = getHeadYaw() - getYaw();
+        while (diff < -180) {
             diff += 360;
         }
-        while(diff > 180) {
+        while (diff > 180) {
             diff -= 360;
         }
-        float maxYaw = Math.min(90, 180 - 2 * Math.abs(getLocation().getPitch()));
-        if(diff > maxYaw) {//90) {
-            setHeadRotation(getLocation().getYaw()+maxYaw/*90f*/,getLocation().getPitch());
-        }
-        else if(diff < -90) {
-            setHeadRotation(getLocation().getYaw() - maxYaw/*90f*/, getLocation().getPitch());
+        float maxYaw = Math.min(90, 180 - 2 * Math.abs(getPitch()));
+        if (diff > maxYaw) {//90) {
+            setHeadRotation(getYaw() + maxYaw/*90f*/, getPitch());
+        } else if (diff < -90) {
+            setHeadRotation(getYaw() - maxYaw/*90f*/, getPitch());
         }
     }
 
     @Override
     public boolean hasLookUpdate() {
-        return currentHeadPitch != getLocation().getPitch() || currentHeadYaw != getHeadYaw();
+        return currentHeadPitch != getHeadPitch() || currentHeadYaw != getHeadYaw();
     }
 
     @Override
     public boolean hasRotationUpdate() {
-        return currentYaw != getLocation().getYaw();
+        return currentYaw != getYaw();
     }
 
     public Vector getHeadPitchCenter() {
@@ -255,7 +253,7 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
 
     @Override
     public boolean hasId(int entityId) {
-        return this.firstEntityId <= entityId && this.firstEntityId+getEntityQuantity() > entityId;
+        return this.firstEntityId <= entityId && this.firstEntityId + getEntityQuantity() > entityId;
     }
 
     public RotationMode getRotationMode() {
@@ -280,7 +278,9 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     }
 
     public enum RotationMode {
-        YAW, YAW_PITCH, YAW_PITCH_ROLL;
+        YAW,
+        YAW_PITCH,
+        YAW_PITCH_ROLL;
     }
 
     public VirtualEntityFactory getFactory() {
