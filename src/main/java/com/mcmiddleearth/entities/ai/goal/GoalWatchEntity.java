@@ -27,19 +27,10 @@ public class GoalWatchEntity extends GoalVirtualEntity {
         }
         this.movementSpeed = MovementSpeed.STAND;
         this.clearHeadGoals();
-
-        if (this.target == null || !this.target.isOnline()) {
-            return;
-        }
-
-        this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
-
-        this.addHeadGoal(this.headGoalWatch);
     }
 
     @Override
     public void update() {
-
         super.update();
         if (this.target != null) {
             this.uniqueId = this.target.getUniqueId();
@@ -56,6 +47,7 @@ public class GoalWatchEntity extends GoalVirtualEntity {
                 this.targetIncomplete = false;
 
                 if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
+                    this.clearHeadGoals();
                     this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
                     this.addHeadGoal(this.headGoalWatch);
                 }
@@ -84,6 +76,7 @@ public class GoalWatchEntity extends GoalVirtualEntity {
                 this.tickCounter = 0;
 
                 if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
+                    this.clearHeadGoals();
                     this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
                     this.addHeadGoal(this.headGoalWatch);
                 }
