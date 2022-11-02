@@ -15,11 +15,16 @@ public class GoalWatchLocation extends GoalVirtualEntity {
     public GoalWatchLocation(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
 
-        this.targetLocation = factory.getTargetLocation();
+        this.targetLocation = factory.getTargetLocation().clone();
         this.movementSpeed = MovementSpeed.STAND;
 
-        final Location location = entity.getLocation().clone();
-        final Location orientation = location.setDirection(this.targetLocation.toVector().subtract(location.toVector()));
+        final Location location = this.getEntity().getLocation().clone();
+
+        final Location orientation = location.setDirection(
+            this.targetLocation.toVector().subtract(
+                location.toVector()
+            )
+        );
 
         this.setYaw(orientation.getYaw());
         this.setPitch(orientation.getPitch());

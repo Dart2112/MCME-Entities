@@ -1,25 +1,18 @@
 package com.mcmiddleearth.entities.ai.goal;
 
 import com.mcmiddleearth.entities.EntitiesPlugin;
-import com.mcmiddleearth.entities.ai.goal.head.HeadGoalWatch;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.McmeEntity;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 public class GoalWatchNearestEntity extends GoalWatchEntity {
 
-    //TODO MAKE THE MOVEMENT OF THE HEAD ALSO AFFECT THE BODY
     public GoalWatchNearestEntity(VirtualEntity entity, VirtualEntityGoalFactory factory) {
         super(entity, factory);
 

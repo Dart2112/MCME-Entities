@@ -14,21 +14,13 @@ import com.mcmiddleearth.entities.events.events.player.VirtualPlayerAttackEvent;
 import com.mcmiddleearth.entities.events.events.player.VirtualPlayerInteractAtEvent;
 import com.mcmiddleearth.entities.events.events.player.VirtualPlayerInteractEvent;
 import com.mcmiddleearth.entities.server.EntityServer;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.sound.Sound;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.logging.Logger;
 
 public class VirtualEntityUseListener extends EntityListener {
 
@@ -101,10 +93,6 @@ public class VirtualEntityUseListener extends EntityListener {
                     break;
                 case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, virtualEntity, hand, isSneaking));
-
-                    System.out.println("Head Pitch: " + virtualEntity.getHeadPitch());
-                    System.out.println("Head Yaw: " + virtualEntity.getHeadYaw());
-                    System.out.println("Roll: " + virtualEntity.getRoll());
 
                     if (virtualEntity.getTriggeredSound() != null) {
                         Location location = virtualEntity.getLocation();

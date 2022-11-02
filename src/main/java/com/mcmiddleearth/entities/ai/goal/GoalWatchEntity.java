@@ -27,6 +27,9 @@ public class GoalWatchEntity extends GoalVirtualEntity {
         }
         this.movementSpeed = MovementSpeed.STAND;
         this.clearHeadGoals();
+
+        this.setYaw(0);
+        this.setPitch(0);
     }
 
     @Override
@@ -45,14 +48,7 @@ public class GoalWatchEntity extends GoalVirtualEntity {
             if (search != null) {
                 this.target = search;
                 this.targetIncomplete = false;
-
-                if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
-                    this.clearHeadGoals();
-                    this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
-                    this.addHeadGoal(this.headGoalWatch);
-                }
-
-                this.headGoalWatch.setTarget(this.target);
+                this.setOrientation();
             }
         }
 
@@ -63,28 +59,33 @@ public class GoalWatchEntity extends GoalVirtualEntity {
 
         if (!this.targetIncomplete) {
             if (this.tickCounter % 3 == 0) {
-                final Location location = this.getEntity().getLocation().clone();
-                final Location targetLocation = this.target.getLocation().clone();
-
-                final Location orientation = location.setDirection(
-                    targetLocation.toVector().subtract(
-                        location.toVector()
-                    )
-                );
-                this.setYaw(orientation.getYaw());
-                this.setPitch(orientation.getPitch());
                 this.tickCounter = 0;
-
-                if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
-                    this.clearHeadGoals();
-                    this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
-                    this.addHeadGoal(this.headGoalWatch);
-                }
-
-                this.headGoalWatch.setTarget(this.target);
+                this.setOrientation();
             }
             this.tickCounter++;
         }
+    }
+
+    private void setOrientation() {
+        final Location location = this.getEntity().getLocation().clone();
+        final Location targetLocation = this.target.getLocation().clone();
+
+        final Location orientation = location.setDirection(
+            targetLocation.toVector().subtract(
+                location.toVector()
+            )
+        );
+
+        this.setYaw(orientation.getYaw());
+        this.setPitch(orientation.getPitch());
+
+        if (this.headGoalWatch == null || this.getHeadGoals().isEmpty()) {
+            this.clearHeadGoals();
+            this.headGoalWatch = new HeadGoalWatch(this.target, this.getEntity());
+            this.addHeadGoal(this.headGoalWatch);
+        }
+
+        this.headGoalWatch.setTarget(this.target);
     }
 
     @Override
