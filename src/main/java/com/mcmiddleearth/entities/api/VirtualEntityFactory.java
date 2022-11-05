@@ -37,7 +37,9 @@ public class VirtualEntityFactory {
 
     private UUID uniqueId = null;
 
-    private String name = "", dataFile = "", displayName = null, triggeredSound = null;
+    private String name = "", dataFile = "", displayName = null;
+    private List<String> triggeredSounds = null;
+    private List<String> subtitles = null;
 
     private Vector displayNamePosition = new Vector(0, 0, 0);
 
@@ -61,7 +63,7 @@ public class VirtualEntityFactory {
 
     private Vector headPitchCenter = new Vector(0, 0.1, -0.03);
 
-    private SpeechBalloonLayout speechBalloonLayout = new SpeechBalloonLayout(), subtitleLayout = null;
+    private SpeechBalloonLayout speechBalloonLayout = new SpeechBalloonLayout();
 
     private Vector mouth = new Vector(0, 1.7, 0);
 
@@ -162,8 +164,21 @@ public class VirtualEntityFactory {
         return useWhitelistAsBlacklist;
     }
 
+    public List<String> getTriggeredSounds() {
+        return this.triggeredSounds;
+    }
+
+    public VirtualEntityFactory withTriggeredSounds(List<String> triggeredSounds) {
+        this.triggeredSounds = triggeredSounds;
+        return this;
+    }
+
     public VirtualEntityFactory withTriggeredSound(String triggeredSound) {
-        this.triggeredSound = triggeredSound;
+        if(this.triggeredSounds == null) {
+            this.triggeredSounds = new ArrayList<>();
+        }
+
+        this.triggeredSounds.add(triggeredSound);
         return this;
     }
 
@@ -252,8 +267,8 @@ public class VirtualEntityFactory {
         return this;
     }
 
-    public VirtualEntityFactory withSubtitleLayout(SpeechBalloonLayout subtitleLayout) {
-        this.subtitleLayout = subtitleLayout;
+    public VirtualEntityFactory withSubtitles(List<String> subtitles) {
+        this.subtitles = subtitles;
         return this;
     }
 
@@ -293,8 +308,8 @@ public class VirtualEntityFactory {
         return headPoseDelay;
     }
 
-    public SpeechBalloonLayout getSubtitleLayout() {
-        return subtitleLayout;
+    public List<String> getSubtitles() {
+        return subtitles;
     }
 
     public VirtualEntityGoalFactory getGoalFactory() {
@@ -333,10 +348,6 @@ public class VirtualEntityFactory {
     public VirtualEntityFactory withGoalFactory(VirtualEntityGoalFactory factory) {
         this.goalFactory = factory;
         return this;
-    }
-
-    public String getTriggeredSound() {
-        return triggeredSound;
     }
 
     public Vector getDisplayNamePosition() {

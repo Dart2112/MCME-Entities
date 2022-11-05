@@ -7,7 +7,12 @@ import com.mcmiddleearth.entities.ai.goal.GoalDistance;
 import com.mcmiddleearth.entities.ai.goal.GoalVirtualEntity;
 import com.mcmiddleearth.entities.ai.movement.EntityBoundingBox;
 import com.mcmiddleearth.entities.ai.movement.MovementEngine;
-import com.mcmiddleearth.entities.api.*;
+import com.mcmiddleearth.entities.api.ActionType;
+import com.mcmiddleearth.entities.api.EntityAPI;
+import com.mcmiddleearth.entities.api.McmeEntityType;
+import com.mcmiddleearth.entities.api.MovementSpeed;
+import com.mcmiddleearth.entities.api.MovementType;
+import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.entities.attributes.VirtualAttributeFactory;
 import com.mcmiddleearth.entities.entities.composite.SpeechBalloonEntity;
 import com.mcmiddleearth.entities.entities.composite.bones.SpeechBalloonLayout;
@@ -23,11 +28,16 @@ import com.mcmiddleearth.entities.exception.InvalidLocationException;
 import com.mcmiddleearth.entities.inventory.McmeInventory;
 import com.mcmiddleearth.entities.protocol.packets.AbstractPacket;
 import com.mcmiddleearth.entities.util.UuidGenerator;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import net.kyori.adventure.sound.SoundStop;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attributable;
@@ -38,13 +48,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.*;
 
 public abstract class VirtualEntity implements McmeEntity, Attributable {
 
@@ -114,11 +119,15 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     private int hurtCoolDown = 0;
 
     private Set<McmeEntity> enemies = new HashSet<>();
-    private String triggeredSound;
+
+    private Map<UUID, Integer> soundsStage = new HashMap<>();
+    private List<String> triggeredSounds;
+    private List<String> subtitles;
+
     //private String[] speech;
     private boolean isTalking;
     private int speechCounter;
-    private SpeechBalloonLayout defaultSpeechBalloonLayout, currentSpeechBalloonLayout, subtitleLayout;
+    private SpeechBalloonLayout defaultSpeechBalloonLayout, currentSpeechBalloonLayout;
 
     private Vector mouth, sitPoint, saddle;
 
@@ -139,7 +148,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.name = (factory.getName() != null ? factory.getName() : "unnamed");
         this.attributes = factory.getAttributes();
         this.displayName = factory.getDisplayName();
-        this.triggeredSound = factory.getTriggeredSound();
+        this.triggeredSounds = (factory.getTriggeredSounds() != null ? factory.getTriggeredSounds() : new ArrayList<>());
+        this.subtitles = (factory.getSubtitles() != null ? factory.getSubtitles() : new ArrayList<>());
         this.useWhitelistAsBlacklist = factory.hasBlackList();
         this.whiteList = (factory.getWhitelist() != null ? factory.getWhitelist() : new HashSet<>());
         this.movementType = factory.getMovementType();
@@ -153,7 +163,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         }
         this.attackDelay = factory.getAttackDelay();
         this.defaultSpeechBalloonLayout = factory.getSpeechBalloonLayout();
-        this.subtitleLayout = factory.getSubtitleLayout();
         this.mouth = factory.getMouth();
         this.viewDistance = factory.getViewDistance();
         this.jumpHeight = factory.getJumpHeight();
@@ -182,6 +191,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         boundingBox.setLocation(location);
         this.movementEngine = null;
         this.whiteList = new HashSet<>();
+        this.triggeredSounds = new ArrayList<>();
+        this.subtitles = new ArrayList<>();
     }
 
     @Override
@@ -464,6 +475,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         }
         removePacket.send(player);
         viewers.remove(player);
+        soundsStage.remove(player.getUniqueId());
     }
 
     public void removeAllViewers() {
@@ -705,20 +717,54 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         return displayName;
     }
 
-    public String getTriggeredSound() {
-        return triggeredSound;
+    public List<String> getTriggeredSounds() {
+        return this.triggeredSounds;
     }
 
-    public void setTriggeredSound(String triggeredSound) {
-        this.triggeredSound = triggeredSound;
+    public void addTriggeredSound(String triggeredSound) {
+        this.triggeredSounds.add(triggeredSound);
     }
 
-    public SpeechBalloonLayout getSubtitleLayout() {
-        return subtitleLayout;
+    public List<String> getSubtitles() {
+        return this.subtitles;
     }
 
-    public void setSubtitleLayout(SpeechBalloonLayout subtitleLayout) {
-        this.subtitleLayout = subtitleLayout;
+    public void addSubtitle(String text) {
+        this.subtitles.add(text);
+    }
+
+    public void playSound(RealPlayer player) {
+        final int stage = this.soundsStage.getOrDefault(player.getUniqueId(), 1);
+
+        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () -> {
+            for (final String sound : this.triggeredSounds) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                    "stopsound " + player.getName() + " * " + sound);
+            }
+        });
+
+        final String sound = this.triggeredSounds.get(stage - 1);
+        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "playsound " + sound + " player " + player.getName() + " " + this.location.getBlockX() + " " + this.location.getBlockY() + " " + this.location.getBlockZ()));
+
+        if(this.subtitles.size() >= stage) {
+            this.saySubtitles(player, stage);
+        }
+
+        if(this.triggeredSounds.size() == stage) {
+            this.soundsStage.remove(player.getUniqueId());
+            return;
+        }
+
+        this.soundsStage.put(player.getUniqueId(), stage + 1);
+    }
+
+    private void saySubtitles(RealPlayer player, int stage) {
+        final String subtitle = this.subtitles.get(stage - 1);
+        for (final String s : subtitle.split("///")) {
+            player.getBukkitPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', s));
+        }
     }
 
     public void say(String message, int duration) {
@@ -747,39 +793,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             currentSpeechBalloonLayout = factory;
             viewers.forEach(this::createSpeechBalloon);
         }
-    }
-
-    public void saySubtitles(Player player) {
-        VirtualEntityTalkEvent event = new VirtualEntityTalkEvent(this, subtitleLayout);
-        EntitiesPlugin.getEntityServer().handleEvent(event);
-        if (event.isCancelled()) return;
-        SpeechBalloonEntity speechBalloonEntity = speechBallons.remove(player.getUniqueId());
-        if (speechBalloonEntity != null) {
-            speechBalloonEntity.terminate();
-        }
-
-        isTalking = true;
-        speechCounter = subtitleLayout.getDuration();
-        currentSpeechBalloonLayout = subtitleLayout;
-        createSpeechBalloon(player);
-
-        String line = ChatColor.translateAlternateColorCodes('&', subtitleLayout.getLines()[0]);
-        Component component = LegacyComponentSerializer.builder().hexColors().character('&').build().deserialize(line).decoration(TextDecoration.ITALIC, false);
-        BukkitRunnable bukkitRunnable = new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (speechCounter <= 0) {
-                    player.sendActionBar(Component.empty());
-                    this.cancel();
-                    return;
-                }
-
-                player.spigot().sendMessage(TextComponent.fromLegacyText(line));
-                player.sendActionBar(component);
-            }
-        };
-
-        bukkitRunnable.runTaskTimer(EntitiesPlugin.getInstance(), 1L, 1L);
     }
 
     private void createSpeechBalloon(Player viewer) {
@@ -879,7 +892,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         VirtualEntityFactory factory = new VirtualEntityFactory(type, location, useWhitelistAsBlacklist, uniqueId, name, attributes)
                 .withBoundingBox(boundingBox)
                 .withDisplayName(displayName)
-                .withTriggeredSound(triggeredSound)
+                .withTriggeredSounds(triggeredSounds)
                 .withMovementType(movementType)
                 .withViewDistance(viewDistance)
                 .withHealth(health)
@@ -893,7 +906,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 .withAttributes(attributes)
                 .withEnemies(enemies)
                 .withSpeechBalloonLayout(defaultSpeechBalloonLayout)
-                .withSubtitleLayout(subtitleLayout)
+                .withSubtitles(subtitles)
                 .withSitPoint(sitPoint)
                 .withSaddlePoint(saddle)
                 .withAttackDelay(attackDelay);

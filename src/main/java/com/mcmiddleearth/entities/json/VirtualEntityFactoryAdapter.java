@@ -50,7 +50,8 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
             SPEECH_BALLOON_LAYOUT = "speech_balloon_layout",
             MOUTH = "mouth",
             SOUND = "triggered_sound",
-            SUBTITLE = "subtitle_message",
+            SOUNDS = "triggered_sounds",
+            SUBTITLES = "subtitles",
             MANUAL_ANIMATION = "manual_animation",
             HEAD_POSE_DELAY = "head_pose_delay",
             VIEW_DISTANCE = "view_distance",
@@ -104,8 +105,22 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
         JsonUtil.writeNonDefaultDouble(out, HEALTH, factory.getHealth(), defaults.getHealth(), writeDefaults);
         JsonUtil.writeNonDefaultString(out, MOVEMENT_TYPE, factory.getMovementType().name().toLowerCase(),
                 defaults.getMovementType().name().toLowerCase(), writeDefaults);
-        JsonUtil.writeNonDefaultString(out, SOUND, factory.getTriggeredSound(),
-                defaults.getTriggeredSound(), false);
+
+        if (factory.getTriggeredSounds() != null) {
+            out.name(SOUNDS).beginArray();
+            for (final String triggeredSound : factory.getTriggeredSounds()) {
+                out.value(triggeredSound);
+            }
+            out.endArray();
+        }
+
+        if (factory.getSubtitles() != null) {
+            out.name(SUBTITLES).beginArray();
+            for (final String subtitle : factory.getSubtitles()) {
+                out.value(subtitle);
+            }
+            out.endArray();
+        }
 
         if (writeDefaults || !factory.getAttributes().isEmpty()) {
             out.name(ATTRIBUTES).beginArray();
@@ -129,23 +144,6 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
         if (writeDefaults || !factory.getSpeechBalloonLayout().equals(defaults.getSpeechBalloonLayout())) {
             out.name(SPEECH_BALLOON_LAYOUT);
             gson.toJson(factory.getSpeechBalloonLayout(), SpeechBalloonLayout.class, out);
-        }
-
-        //TODO Serialization for Speech balloon is not currently working, it's not closing the object.
-        if ((writeDefaults && defaults.getSpeechBalloonLayout() != null) || (factory.getSubtitleLayout() != null && !factory.getSubtitleLayout().equals(defaults.getSpeechBalloonLayout()))) {
-            out.name(SUBTITLE).beginObject();
-
-            SpeechBalloonLayout layout = factory.getSubtitleLayout();
-            out.name("position").value(layout.getPosition().name());
-            out.name("duration").value(layout.getDuration());
-            out.name("text").beginArray();
-            for (String line : layout.getLines()) {
-                out.value(line);
-            }
-            out.endArray();
-
-
-            out.endObject();
         }
 
         JsonUtil.writeNonDefaultVector(out, MOUTH, factory.getMouth(), defaults.getMouth(), gson, writeDefaults);
@@ -257,6 +255,16 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                     case SOUND:
                         factory.withTriggeredSound(in.nextString());
                         break;
+                    case SOUNDS:
+                        List<String> sounds = new ArrayList<>();
+                        in.beginArray();
+                        while (in.hasNext()) {
+                            sounds.add(in.nextString());
+                        }
+
+                        in.endArray();
+                        factory.withTriggeredSounds(sounds);
+                        break;
                     case MOVEMENT_TYPE:
                         factory.withMovementType(MovementType.valueOf(in.nextString().toUpperCase()));
                         break;
@@ -281,39 +289,15 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                     case HEAD_PITCH_CENTER:
                         factory.withHeadPitchCenter(gson.fromJson(in, Vector.class));
                         break;
-                    case SUBTITLE:
-                        in.beginObject();
-
-                        List<String> lines = new ArrayList<>();
-                        int duration = 0;
-                        SpeechBalloonLayout.Position position = SpeechBalloonLayout.Position.TOP;
+                    case SUBTITLES:
+                        List<String> subtitles = new ArrayList<>();
+                        in.beginArray();
                         while (in.hasNext()) {
-                            switch (in.nextName().toLowerCase(Locale.ROOT)) {
-                                case "position":
-                                    position = SpeechBalloonLayout.Position.valueOf(in.nextString().toUpperCase(Locale.ROOT));
-                                    break;
-                                case "duration":
-                                    duration = in.nextInt();
-                                    break;
-                                case "text":
-                                    in.beginArray();
-                                    while(in.hasNext()) {
-                                        lines.add(in.nextString());
-                                    }
-                                    in.endArray();
-                                    break;
-                                default:
-                                    in.skipValue();
-                                    break;
-                            }
+                            subtitles.add(in.nextString());
                         }
 
-                        String[] text = new String[lines.size()];
-                        SpeechBalloonLayout layout = new SpeechBalloonLayout(position, SpeechBalloonLayout.Width.OPTIMAL)
-                                .withDuration(duration)
-                                .withLines(lines.toArray(text));
-                        factory.withSubtitleLayout(layout);
-                        in.endObject();
+                        in.endArray();
+                        factory.withSubtitles(subtitles);
                         break;
                     case SPEECH_BALLOON_LAYOUT:
                         factory.withSpeechBalloonLayout(gson.fromJson(in, SpeechBalloonLayout.class));

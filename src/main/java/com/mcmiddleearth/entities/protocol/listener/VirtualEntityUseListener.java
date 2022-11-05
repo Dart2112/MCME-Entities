@@ -1,6 +1,7 @@
 package com.mcmiddleearth.entities.protocol.listener;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.PacketType.Play;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
@@ -14,10 +15,13 @@ import com.mcmiddleearth.entities.events.events.player.VirtualPlayerAttackEvent;
 import com.mcmiddleearth.entities.events.events.player.VirtualPlayerInteractAtEvent;
 import com.mcmiddleearth.entities.events.events.player.VirtualPlayerInteractEvent;
 import com.mcmiddleearth.entities.server.EntityServer;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
@@ -81,28 +85,12 @@ public class VirtualEntityUseListener extends EntityListener {
                         }
                     }
 
-                    if (virtualEntity.getTriggeredSound() != null) {
-                        Location location = virtualEntity.getLocation();
-                        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "playsound " + virtualEntity.getTriggeredSound() + " player " + player.getName() + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ()));
-                    }
-
-                    if (virtualEntity.getSubtitleLayout() != null) {
-                        virtualEntity.saySubtitles(player.getBukkitPlayer());
-                    }
+                    this.triggerSound(virtualEntity, player);
                     break;
                 case INTERACT:
                     throwEvent(new VirtualPlayerInteractEvent(player, virtualEntity, hand, isSneaking));
 
-                    if (virtualEntity.getTriggeredSound() != null) {
-                        Location location = virtualEntity.getLocation();
-                        Bukkit.getScheduler().runTask(EntitiesPlugin.getInstance(), () ->
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "playsound " + virtualEntity.getTriggeredSound() + " player " + player.getName() + " " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ()));
-                    }
-
-                    if (virtualEntity.getSubtitleLayout() != null) {
-                        virtualEntity.saySubtitles(player.getBukkitPlayer());
-                    }
+                    this.triggerSound(virtualEntity, player);
                     break;
                 case ATTACK:
                     VirtualPlayerAttackEvent entityEvent = new VirtualPlayerAttackEvent(player, virtualEntity, isSneaking);
@@ -112,6 +100,12 @@ public class VirtualEntityUseListener extends EntityListener {
                     }
                     break;
             }
+        }
+    }
+
+    private void triggerSound(VirtualEntity virtualEntity, RealPlayer player) {
+        if(virtualEntity.getTriggeredSounds() != null && !virtualEntity.getTriggeredSounds().isEmpty()) {
+            virtualEntity.playSound(player);
         }
     }
 }
