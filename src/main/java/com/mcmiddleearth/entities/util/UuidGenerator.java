@@ -1,9 +1,5 @@
 package com.mcmiddleearth.entities.util;
 
-import com.fasterxml.uuid.EthernetAddress;
-import com.fasterxml.uuid.Generators;
-
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -18,43 +14,35 @@ public class UuidGenerator {
     }
 
     public static UUID fast_random() {
-        Random rand = new Random();
+        final Random rand = new Random();
         return new UUID(rand.nextLong(),rand.nextLong());
     }
 
     public static UUID slow_getRandomV1() {
-        Random random = new Random();
-        long random63BitLong = random.nextLong() & 0x3FFFFFFFFFFFFFFFL;
-        long variant3BitFlag = 0x8000000000000000L;
-        long leastSig = random63BitLong + variant3BitFlag;
+        final Random random = new Random();
+        final long random63BitLong = random.nextLong() & 0x3FFFFFFFFFFFFFFFL;
+        final long variant3BitFlag = 0x8000000000000000L;
+        final long leastSig = random63BitLong + variant3BitFlag;
 
-        LocalDateTime start = LocalDateTime.of(1582, 10, 15, 0, 0, 0);
-        Duration duration = Duration.between(start, LocalDateTime.now());
-        long seconds = duration.getSeconds();
-        long nanos = duration.getNano();
-        long timeForUuidIn100Nanos = seconds * 10000000 + nanos * 100;
-        long least12SignificatBitOfTime = (timeForUuidIn100Nanos & 0x000000000000FFFFL) >> 4;
-        long version = 1 << 12;
-        long mostSig = (timeForUuidIn100Nanos & 0xFFFFFFFFFFFF0000L) + version + least12SignificatBitOfTime;
+        final LocalDateTime start = LocalDateTime.of(1582, 10, 15, 0, 0, 0);
+        final Duration duration = Duration.between(start, LocalDateTime.now());
+        final long seconds = duration.getSeconds();
+        final long nanos = duration.getNano();
+        final long timeForUuidIn100Nanos = seconds * 10000000 + nanos * 100;
+        final long least12SignificatBitOfTime = (timeForUuidIn100Nanos & 0x000000000000FFFFL) >> 4;
+        final long version = 1 << 12;
+        final long mostSig = (timeForUuidIn100Nanos & 0xFFFFFFFFFFFF0000L) + version + least12SignificatBitOfTime;
 
-        UUID uuid = new UUID(mostSig,leastSig);
-Logger.getGlobal().info("UUID version: "+uuid.version());
-        return uuid;
-    }
-
-    public static UUID slow_getRandomV2() {
-        //long nul = 0;
-        //return new UUID(nul,nul);
-        UUID uuid = Generators.timeBasedGenerator(EthernetAddress.fromInterface()).generate();
-Logger.getGlobal().info("UUID version: "+uuid.version());
+        final UUID uuid = new UUID(mostSig, leastSig);
+        Logger.getGlobal().info("UUID version: " + uuid.version());
         return uuid;
     }
 
     public static UUID slow_getRandomV3(String namespace, String name) {
-        byte[] bytes;
+        final byte[] bytes;
         bytes = (namespace+name).getBytes(StandardCharsets.UTF_8);
 
-        UUID uuid = UUID.nameUUIDFromBytes(bytes);
+        final UUID uuid = UUID.nameUUIDFromBytes(bytes);
 Logger.getGlobal().info("UUID version: "+uuid.version());
         return uuid;
     }

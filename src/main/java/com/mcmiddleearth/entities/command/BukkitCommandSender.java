@@ -4,17 +4,16 @@ import com.mcmiddleearth.command.McmeCommandSender;
 import com.mcmiddleearth.entities.api.McmeEntityType;
 import com.mcmiddleearth.entities.api.VirtualEntityFactory;
 import com.mcmiddleearth.entities.entities.McmeEntity;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 
 public class BukkitCommandSender implements McmeCommandSender {
 
@@ -26,7 +25,7 @@ public class BukkitCommandSender implements McmeCommandSender {
 
     List<Location> selectedPoints = new ArrayList<>();
 
-    VirtualEntityFactory factory = new VirtualEntityFactory(new McmeEntityType(McmeEntityType.CustomEntityType.BAKED_ANIMATION),null);
+    VirtualEntityFactory factory = new VirtualEntityFactory(new McmeEntityType(McmeEntityType.CustomEntityType.BAKED_ANIMATION), null);
 
     public BukkitCommandSender(CommandSender sender) {
         this.sender = sender;
@@ -34,40 +33,52 @@ public class BukkitCommandSender implements McmeCommandSender {
 
     @Override
     public void sendMessage(BaseComponent[] baseComponents) {
-        sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(baseComponents[0].toLegacyText())));
+        this.sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(baseComponents[0].toLegacyText())));
+    }
+
+    @Override
+    public void sendMessage(String message) {
+        this.sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(message)));
+    }
+
+    @Override
+    public void sendError(String message) {
+        this.sender.sendMessage(Component.text("[Entities] ", NamedTextColor.AQUA).append(Component.text(message, NamedTextColor.RED)));
     }
 
     public CommandSender getCommandSender() {
-        return sender;
+        return this.sender;
     }
 
     public Set<McmeEntity> getSelectedEntities() {
-        selectedEntities = selectedEntities.stream().filter(selectedTargetEntity -> !selectedTargetEntity.isTerminated())
-                                                    .collect(Collectors.toSet());
-        return new HashSet<>(selectedEntities);
-    }
-
-    public void clearSelectedEntities() {
-        selectedEntities.clear();
-    }
-
-    public void setSelectedEntities(Set<McmeEntity> entities) { this.selectedEntities = entities; }
-
-    public void addToSelectedEntities(McmeEntity entity) {
-        selectedEntities.add(entity);
-    }
-
-    public void removeFromSelectedEntities(McmeEntity entity) {
-        selectedEntities.remove(entity);
+        this.selectedEntities = this.selectedEntities.stream().filter(selectedTargetEntity -> !selectedTargetEntity.isTerminated())
+            .collect(Collectors.toSet());
+        return new HashSet<>(this.selectedEntities);
     }
 
     public void setSelectedEntities(McmeEntity entity) {
-        clearSelectedEntities();
-        addToSelectedEntities(entity);
+        this.clearSelectedEntities();
+        this.addToSelectedEntities(entity);
+    }
+
+    public void setSelectedEntities(Set<McmeEntity> entities) {
+        this.selectedEntities = entities;
+    }
+
+    public void clearSelectedEntities() {
+        this.selectedEntities.clear();
+    }
+
+    public void addToSelectedEntities(McmeEntity entity) {
+        this.selectedEntities.add(entity);
+    }
+
+    public void removeFromSelectedEntities(McmeEntity entity) {
+        this.selectedEntities.remove(entity);
     }
 
     public List<Location> getSelectedPoints() {
-        return selectedPoints;
+        return this.selectedPoints;
     }
 
     public void setSelectedPoints(List<Location> selectedPoints) {
@@ -75,23 +86,23 @@ public class BukkitCommandSender implements McmeCommandSender {
     }
 
     public void setSelectedPoints(Location point) {
-        selectedPoints.clear();
-        selectedPoints.add(point);
+        this.selectedPoints.clear();
+        this.selectedPoints.add(point);
     }
     public void clearSelectedPoints() {
-        selectedPoints.clear();
+        this.selectedPoints.clear();
     }
 
     public void addToSelectedPoints(Location  point) {
-        selectedPoints.add(point);
+        this.selectedPoints.add(point);
     }
 
     public void removeFromSelectedPoints(Location point) {
-        selectedPoints.remove(point);
+        this.selectedPoints.remove(point);
     }
 
     public VirtualEntityFactory getEntityFactory() {
-        return factory;
+        return this.factory;
     }
 
     public void setEntityFactory(VirtualEntityFactory factory) {
@@ -99,7 +110,7 @@ public class BukkitCommandSender implements McmeCommandSender {
     }
 
     public McmeEntity getSelectedTargetEntity() {
-        return selectedTargetEntity;
+        return this.selectedTargetEntity;
     }
 
     public void setSelectedTargetEntity(McmeEntity target) {
