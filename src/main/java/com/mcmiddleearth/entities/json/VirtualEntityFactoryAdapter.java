@@ -169,7 +169,7 @@ public class VirtualEntityFactoryAdapter extends TypeAdapter<VirtualEntityFactor
                 defaults.getKnockBackBase(), writeDefaults);
         JsonUtil.writeNonDefaultFloat(out, KNOCK_BACK_PER_DAMAGE, factory.getKnockBackPerDamage(),
                 defaults.getKnockBackPerDamage(), writeDefaults);
-        if (writeDefaults || !factory.getEnemies().isEmpty()) {
+        if (writeDefaults || (factory.getEnemies() != null && !factory.getEnemies().isEmpty())) {
             out.name(ENEMIES).beginArray();
             for (McmeEntity enemy : factory.getEnemies()) {
                 JsonUtil.writeEntityLink(enemy, false, out);
