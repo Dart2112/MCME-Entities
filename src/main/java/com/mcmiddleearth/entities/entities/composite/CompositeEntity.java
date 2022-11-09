@@ -1,5 +1,6 @@
 package com.mcmiddleearth.entities.entities.composite;
 
+import com.mcmiddleearth.entities.EntitiesPlugin;
 import com.mcmiddleearth.entities.api.McmeEntityType;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
 import com.mcmiddleearth.entities.api.VirtualEntityFactory;
@@ -12,24 +13,41 @@ import com.mcmiddleearth.entities.protocol.packets.*;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntityMovePacket;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntitySpawnPacket;
 import com.mcmiddleearth.entities.protocol.packets.composite.CompositeEntityTeleportPacket;
+import org.apache.commons.math3.util.FastMath;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Rotation;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public abstract class CompositeEntity extends VirtualEntity {
 
     private final Set<Bone> bones = new HashSet<>();
-    //private final Set<Bone> headBones = new HashSet<>();
+    /****
+     * Main Head Bone is a reference to the root head bone in the set of bones. It must be called "head".
+     * Note that there can be more than one head bone, but this refers only to one of them
+     * It is used for head pos + real head yaw / pitch.
+     */
+    private Bone mainHeadBone;
+
+    /****
+     * Forward bone is used to determine the forward direction of the head to allow for spewing effects. You can definitely
+     * get that directly from the head pose of the armor stand as well but I'm too stupid to figure it out
+     * (you have to take roll into account due to extrinsic rotation (I think))
+     */
+    private Bone forwardBone;
+    private final Set<Bone> headBones = new HashSet<>();
+    private boolean goalHasHeadControl;
 
     private final int firstEntityId;
 
     private Bone displayNameBone;
     private Vector displayNamePosition;
-
-    private Vector headPitchCenter;
 
     private int headPoseDelay;
 
@@ -50,7 +68,6 @@ public abstract class CompositeEntity extends VirtualEntity {
                               RotationMode rotationMode) throws InvalidLocationException, InvalidDataException {
         super(factory);
         firstEntityId = entityId;
-        headPitchCenter = factory.getHeadPitchCenter().clone();
         headPoseDelay = factory.getHeadPoseDelay();
         this.rotationMode = rotationMode;
         maxRotationStep = factory.getMaxRotationStep();
@@ -66,7 +83,6 @@ public abstract class CompositeEntity extends VirtualEntity {
     protected CompositeEntity(int entityId, McmeEntityType type, Location location) {
         super(type, location);
         firstEntityId = entityId;
-        headPitchCenter = new Vector(0,0,0);
     }
 
     protected void createPackets() {
@@ -98,23 +114,6 @@ public abstract class CompositeEntity extends VirtualEntity {
         return super.getName();
     }
 
-/*    @Override
-    public void doTick() {
-        if(animation!=null) {
-            if (animation.equals(ActionType.HURT)) {
-                bones.forEach(bone -> {
-                    bone.getAnimationPacket().setAnimation(SimpleEntityAnimationPacket.AnimationType.TAKE_DAMAGE);
-                    getViewers().forEach(viewer -> {
-                        bone.getAnimationPacket().send(viewer);
-Logger.getGlobal().info("Sending animation: "+viewer.getName());
-                    });
-                });
-            }
-            animation = null;
-        }
-        super.doTick();
-    }*/
-
     @Override
     public void move() {
         checkHeadYaw();
@@ -124,9 +123,7 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
         if(hasLookUpdate()) {
             updateHeadBones();
         }
-//Logger.getGlobal().info("Rotation: "+hasRotationUpdate()+" "+getLocation().getYaw() +" "+currentYaw);
-//Logger.getGlobal().info("Head Yaw: "+currentHeadYaw+" "+currentPitch+" "+getVelocity().toString());
-        bones.forEach(bone -> bone.move());
+        bones.forEach(Bone::move);
         super.move();
         bones.forEach(Bone::resetUpdateFlags);
     }
@@ -144,18 +141,24 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
 
     protected void updateBodyBones() {
         currentYaw = turn(currentYaw,getLocation().getYaw(),maxRotationStep);
-        bones.stream().filter(bone->!bone.isHeadBone()).forEach(bone-> {
-            bone.setRotation(currentYaw);
+        bones.forEach(bone-> {
+            if(!bone.isHeadBone() || !goalHasHeadControl) // if the goal has head control, don't rotate head bones.
+                bone.setRotation(currentYaw);
         });
     }
 
     private void updateHeadBones() {
         currentHeadYaw = turn(currentHeadYaw, getHeadYaw(),maxRotationStep);
         currentHeadPitch = turn(currentHeadPitch,getHeadPitch(),maxRotationStep);
-        bones.stream().filter(bone -> (bone instanceof  BoneTwoAxis) && bone.isHeadBone()).forEach(bone-> {
-            bone.setRotation(currentHeadYaw);
-            ((BoneTwoAxis)bone).setPitch(currentHeadPitch);
-        });
+
+        if(goalHasHeadControl){
+            headBones.forEach(bone-> {
+                if((bone instanceof BoneTwoAxis)){
+                    bone.setRotation(currentHeadYaw);
+                    ((BoneTwoAxis)bone).setPitch(currentHeadPitch);
+                }
+            });
+        }
     }
 
     protected float turn(float currentAngle, float aimAngle, float maxStep) {
@@ -192,6 +195,74 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
         }
     }
 
+    public void setMainHeadBone(Bone headBone) {
+        this.mainHeadBone = headBone;
+        Logger.getGlobal().warning("SET THE HEAD BONE!");
+    }
+
+    public Set<Bone> getHeadBones() {
+        return headBones;
+    }
+
+    public Bone getForwardBone() {
+        return forwardBone;
+    }
+
+    public void setForwardBone(Bone forwardBone) {
+        this.forwardBone = forwardBone;
+        Logger.getGlobal().warning("SET THE FORWARD BONE!");
+    }
+
+    @Override
+    public Vector getHeadPosition() {
+        if(mainHeadBone != null){
+            return mainHeadBone.getLocation().toVector().add(new Vector(0,1.5,0));
+        }
+        Logger.getGlobal().warning("head bone is null!");
+        return getLocation().toVector().add(new Vector(0,1.5,0));
+    }
+
+    public Vector getRelativeHeadPosition() {
+        if(mainHeadBone != null){
+            return mainHeadBone.getRelativePosition();
+        }
+        return new Vector(0,0,0);
+    }
+
+    public double getRealHeadPitch(){
+
+        // TODO: Find a better way of doing this without relying on forward bone
+
+        if(mainHeadBone != null && forwardBone != null){
+            Location headLocation = mainHeadBone.getLocation().clone();
+            headLocation.setDirection(forwardBone.getLocation().toVector().subtract(mainHeadBone.getLocation().toVector()));
+            return headLocation.getPitch();
+        }
+        return getHeadPitch();
+    }
+
+    public double getRealHeadYaw(){
+
+        // TODO: Find a better way of doing this without relying on forward bone
+
+        if(mainHeadBone != null && forwardBone != null){
+            Location headLocation = mainHeadBone.getLocation().clone();
+            headLocation.setDirection(forwardBone.getLocation().toVector().subtract(mainHeadBone.getLocation().toVector()));
+            return headLocation.getYaw();
+        }
+        return getHeadYaw();
+    }
+
+    private Rotation rotation = null;
+
+    public boolean goalHasHeadControl() {
+        return goalHasHeadControl;
+    }
+
+    public void setGoalHasHeadControl(boolean goalHasHeadControl) {
+        this.goalHasHeadControl = goalHasHeadControl;
+    }
+
     @Override
     public boolean hasLookUpdate() {
         return currentHeadPitch != getLocation().getPitch() || currentHeadYaw != getHeadYaw();
@@ -201,30 +272,6 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     public boolean hasRotationUpdate() {
         return currentYaw != getLocation().getYaw();
     }
-
-    public Vector getHeadPitchCenter() {
-        return headPitchCenter;
-    }
-
-    public void setHeadPitchCenter(Vector headPitchCenter) {
-        this.headPitchCenter = headPitchCenter;
-    }
-
-    /*public void setRotation(float yaw) {
-        bones.stream().filter(bone->!bone.isHeadBone()).forEach(bone-> {
-            bone.setRotation(yaw);
-        });
-        super.setRotation(yaw);
-        //bones.forEach(bone->bone.setRotation(yaw));
-    }
-
-    @Override
-    public void setHeadRotation(float yaw, float pitch) {
-        bones.stream().filter(Bone::isHeadBone).forEach(bone-> {
-            bone.setRotation(yaw);
-            bone.setPitch(pitch);
-        });
-    }*/
 
 
     public Set<Bone> getBones() {
@@ -262,11 +309,6 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
         return rotationMode;
     }
 
-    /*@Override
-    public void playAnimation(ActionType type) {
-        this.animation = type;
-    }*/
-
     public float getMaxRotationStep() {
         return maxRotationStep;
     }
@@ -286,7 +328,6 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
     public VirtualEntityFactory getFactory() {
         VirtualEntityFactory factory = super.getFactory()
             .withHeadPoseDelay(headPoseDelay)
-            .withHeadPitchCenter(headPitchCenter)
             .withMaxRotationStep(maxRotationStep)
             .withDisplayNamePosition(displayNamePosition);
         /*if(getDisplayName() != null && displayNameBone != null) {
@@ -294,5 +335,4 @@ Logger.getGlobal().info("Sending animation: "+viewer.getName());
         }*/
         return factory;
     }
-
 }

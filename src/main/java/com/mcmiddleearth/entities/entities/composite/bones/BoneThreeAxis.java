@@ -18,52 +18,39 @@ public class BoneThreeAxis extends BoneTwoAxis {
     }
 
     public void move() {
-        if(hasHeadPoseUpdate) {
-            rotatedHeadPose = RotationMatrix.rotateXZEulerAngleDegree(headPose,pitch,roll);
-        }
-        Vector shift;
-        if(hasRotationUpdate()) {
-            Vector rotatedZ = RotationMatrix.fastRotateZ(relativePosition,-roll);
-            Vector rotatedZX = RotationMatrix.fastRotateX(rotatedZ,pitch);
-            Vector newRelativePositionRotated = RotationMatrix.fastRotateY(rotatedZX,-yaw);
-            shift = newRelativePositionRotated.clone().subtract(this.relativePositionRotated);
-/*if(getName().equalsIgnoreCase("bone4")) {
-    Logger.getGlobal().info("Rotate 3 axis");
-    Logger.getGlobal().info("orig: " + relativePosition);
-    Logger.getGlobal().info("roll: " + rotatedZ);
-    Logger.getGlobal().info("pitc: " + rotatedZX);
-    Logger.getGlobal().info("newr: " + newRelativePositionRotated);
-}*/
-            relativePositionRotated = newRelativePositionRotated;
+        if(!isHeadBone() || !parent.goalHasHeadControl()){
+            if(hasHeadPoseUpdate) {
+                rotatedHeadPose = RotationMatrix.rotateXZEulerAngleDegree(headPose,pitch,roll);
+            }
+            Vector shift;
+            if(hasRotationUpdate()) {
+                Vector rotatedZ = RotationMatrix.fastRotateZ(relativePosition,-roll);
+                Vector rotatedZX = RotationMatrix.fastRotateX(rotatedZ,pitch);
+                Vector newRelativePositionRotated = RotationMatrix.fastRotateY(rotatedZX,-yaw);
+                shift = newRelativePositionRotated.clone().subtract(this.relativePositionRotated);
+                relativePositionRotated = newRelativePositionRotated;
+            } else {
+                shift = new Vector(0,0,0);
+            }
+            velocity = parent.getVelocity().clone().add(shift);
         } else {
-            shift = new Vector(0,0,0);
+            super.move();
         }
-
-
-        velocity = parent.getVelocity().clone().add(shift);
-/*if(getName().equalsIgnoreCase("bone4")) {
-    Logger.getGlobal().info("velo: "+velocity);
-}*/
-
     }
 
     public void teleport() {
-        if(hasHeadPoseUpdate) {
-            rotatedHeadPose = RotationMatrix.rotateXZEulerAngleDegree(headPose, pitch, roll);
+        if(!isHeadBone() || !parent.goalHasHeadControl()) {
+            if (hasHeadPoseUpdate) {
+                rotatedHeadPose = RotationMatrix.rotateXZEulerAngleDegree(headPose, pitch, roll);
+            }
+            Vector rotatedZ = RotationMatrix.fastRotateZ(relativePosition, -roll);
+            Vector rotatedZX = RotationMatrix.fastRotateX(rotatedZ, pitch);
+            Vector newRelativePositionRotated = RotationMatrix.fastRotateY(rotatedZX, -yaw);
+            relativePositionRotated = newRelativePositionRotated;
         }
-        Vector rotatedZ = RotationMatrix.fastRotateZ(relativePosition,-roll);
-        Vector rotatedZX = RotationMatrix.fastRotateX(rotatedZ,pitch);
-        Vector newRelativePositionRotated = RotationMatrix.fastRotateY(rotatedZX,-yaw);
-/*if(getName().equalsIgnoreCase("bone4")) {
-    Logger.getGlobal().info("Rotate 3 axis");
-    Logger.getGlobal().info("orig: " + relativePosition);
-    Logger.getGlobal().info("roll: " + rotatedZ);
-    Logger.getGlobal().info("pitc: " + rotatedZX);
-    Logger.getGlobal().info("newr: " + newRelativePositionRotated);
-}*/
-        relativePositionRotated = newRelativePositionRotated;
-        /*relativePositionRotated = RotationMatrix.fastRotateY(RotationMatrix
-                .fastRotateX(RotationMatrix.fastRotateZ(relativePosition,roll),pitch),-yaw);*/
+        else {
+            super.teleport();
+        }
     }
 
     public void setRotation(float yaw, float pitch, float roll) {
@@ -72,5 +59,18 @@ public class BoneThreeAxis extends BoneTwoAxis {
         this.roll = roll;
         rotationUpdate = true;
         hasHeadPoseUpdate = true;
+    }
+
+    @Override
+    public void setRotation(float yaw) {
+        this.yaw = yaw;//-parent.getRotation();
+        this.pitch = 0;
+        this.roll = 0;
+        rotationUpdate = true;
+    }
+
+    @Override
+    public float getRoll(){
+        return roll;
     }
 }

@@ -346,6 +346,9 @@ public class VirtualEntityGoalFactory {
                     goal = null;
                 }
                 break;
+            case DEFINED_LOCATION:
+                goal = new GoalDefinedLocation(entity, this);
+                break;
             default:
                 goal = null;
                 break;

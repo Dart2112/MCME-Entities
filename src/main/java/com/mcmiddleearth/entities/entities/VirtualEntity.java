@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.logging.Logger;
 
 public abstract class VirtualEntity implements McmeEntity, Attributable {
 
@@ -236,7 +237,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public void teleport() {
-//if(!(this instanceof Projectile)) Logger.getGlobal().info("teleport");
         teleportPacket.update();
         teleportPacket.send(viewers);
         teleported = false;
@@ -247,12 +247,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public void move() {
-//Logger.getGlobal().info("move");
-//Logger.getGlobal().info("location old: "+ getLocation());
-//Logger.getGlobal().info("velocity: "+ velocity+" yaw: "+getRotation()+" head: "+location.getYaw()+" "+location.getPitch());
         location = location.add(velocity);
-//if(!(this instanceof Projectile)) Logger.getGlobal().info("velocity: "+ velocity);
-//if(!(this instanceof Projectile)) Logger.getGlobal().info("location new: "+ getLocation().getX()+" "+getLocation().getY()+" "+getLocation().getZ());
         boundingBox.setLocation(location);
 
         if ((tickCounter % updateInterval == updateRandom)) {
@@ -269,8 +264,13 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     @Override
+    public boolean teleport(@NotNull Location location) {
+        setLocation(location);
+        return true;
+    }
+
+    @Override
     public void setLocation(Location location) {
-//if(!(this instanceof Projectile)) Logger.getGlobal().info("set location!");
         this.location = location.clone();
         this.boundingBox.setLocation(location);
         teleported = true;
@@ -278,10 +278,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void setVelocity(Vector velocity) {
-/*if (!checkFinite(velocity)) {
-    Logger.getGlobal().info("set Velocity: "+velocity.getX()+" "+velocity.getY()+" "+velocity.getZ());
-    throw new IllegalArgumentException("Set Velocity");
-}*/
         this.velocity = velocity;
     }
 
@@ -328,6 +324,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     @Override
     public float getHeadYaw() {
         return headYaw;
+    }
+
+    @Override
+    public Vector getHeadPosition() {
+        return mouth;
     }
 
     @Override
@@ -468,7 +469,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     public void removeAllViewers() {
         List<Player> removal = new ArrayList<>(viewers);
-//Logger.getGlobal().info("REmove viewers! "+this.getClass().getSimpleName());
         removal.forEach(this::removeViewer);
     }
 
@@ -501,13 +501,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         if (instance == null) {
             return getGenericSpeed();
         }
-//Logger.getGlobal().info("Flyspeed: "+instance);
         return instance.getValue();
     }
 
     public double getGenericSpeed() {
         AttributeInstance instance = getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-//Logger.getGlobal().info("Using generic: "+instance);
         return (instance != null ? instance.getValue() : 0.1);
     }
 
@@ -524,12 +522,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         EntitiesPlugin.getEntityServer().handleEvent(event);
         if (!event.isCancelled()) {
             health -= event.getDamage();
-//Logger.getGlobal().info("Damage: "+damage+" Health: "+health);
             if (health <= 0) {
                 EntitiesPlugin.getEntityServer().handleEvent(new McmeEntityDeathEvent(this));
                 dead = true;
                 playAnimation(ActionType.DEATH);
-                //Logger.getGlobal().info("Dead!");
             } else {
                 playAnimation(ActionType.HURT);
             }
@@ -560,7 +556,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         double resistance = 0;
         if (attribute != null) resistance = attribute.getValue();
         double length = knockBackFactor * (knockBackBase + Math.max(0, damage - resistance) * knockBackPerDamage);
-//Logger.getGlobal().info("Kb base: "+knockBackBase+" per Damage: "+knockBackPerDamage+" resistance: "+resistance+" factor: "+knockBackFactor+" length: "+length);
         Vector normal;
         if (damager != null) {
             normal = damager.getLocation().clone().subtract(location.toVector()).toVector().normalize();
@@ -573,7 +568,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         }
         //actionType = ActionType.HURT;
         hurtCoolDown = 10;
-//Logger.getGlobal().info("Set Velocity: "+ knockBack.getX()+" "+knockBack.getY()+" "+knockBack.getZ());
         setVelocity(knockBack);
         if (damager != null) {
             enemies.add(damager);
@@ -586,13 +580,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     }
 
     public void attack(McmeEntity target, boolean animate) {
-//Logger.getGlobal().info("Att cool: "+attackCoolDown);
         if (attackCoolDown == 0 && hurtCoolDown == 0) {
             VirtualEntityAttackEvent event = new VirtualEntityAttackEvent(this, target);
             EntitiesPlugin.getEntityServer().handleEvent(event);
             if (!event.isCancelled()) {
-                //actionType = ActionType.ATTACK;
-//Logger.getGlobal().info("Attack");
                 VirtualEntity damager = this;
                 Payload attack = new Payload() {
                     public void execute() {

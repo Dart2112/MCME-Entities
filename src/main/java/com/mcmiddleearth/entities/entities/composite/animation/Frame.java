@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class Frame {
 
@@ -33,13 +34,13 @@ public class Frame {
     public static Frame loadFrame(BakedAnimationEntity entity, BakedAnimation animation,
                                   JsonObject data, Material itemMaterial, int headPoseDelay) {
         Set<Map.Entry<String, JsonElement>> entries = data.get("bones").getAsJsonObject().entrySet();
-//long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
         Frame frame = new Frame();
         entries.forEach(entry-> {
             BoneData boneData = BoneData.loadBoneData(entity.getStates(),entry.getValue().getAsJsonObject(),itemMaterial);
             Bone bone = entity.getBones().stream().filter(searchBone->entry.getKey().equals(searchBone.getName())).findFirst().orElse(null);
             if(bone == null) {
-//long boneStart = System.currentTimeMillis();
+                //long boneStart = System.currentTimeMillis();
                 boolean headBone = entry.getKey().startsWith("head");
                 switch(entity.getRotationMode()) {
                     case YAW:
@@ -60,16 +61,21 @@ public class Frame {
                                 boneData.getPosition(), boneData.getItems()[0], headBone, headPoseDelay);
                         break;
                 }
-//Logger.getGlobal().info("Bone creation: "+(System.currentTimeMillis()-boneStart));
                 entity.getBones().add(bone);
-                /*if(bone.getName().startsWith("head")) {
+                if(headBone){
                     entity.getHeadBones().add(bone);
-                }*/
-//Logger.getGlobal().info("create bone at: "+bone.getLocation());
+                    if(entry.getKey().equals("head")) {
+                        // Set main head bone. This is the root head bone that other head bones rotate around
+                        entity.setMainHeadBone(bone);
+                    } else if(entry.getKey().equals("head_forward")) {
+                        // Set forward bone used to calculate proper head rotation to allow for spewing effects
+                        entity.setForwardBone(bone);
+                    }
+                }
             }
             frame.bones.put(bone,boneData);
         });
-//Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
+        //Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
         return frame;
     }
 }

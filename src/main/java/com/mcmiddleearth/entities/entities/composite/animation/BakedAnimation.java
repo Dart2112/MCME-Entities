@@ -120,11 +120,11 @@ public class BakedAnimation {
         String next = (data.has("next")?data.get("next").getAsString():null);
         BakedAnimation animation = new BakedAnimation(entity, type, name, animationName, next, interval);
         JsonArray frameData = data.get("frames").getAsJsonArray();
-//long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
         for(int i = 0; i< frameData.size(); i++) {
             animation.addFrame(Frame.loadFrame(entity,animation,frameData.get(i).getAsJsonObject(),itemMaterial, entity.getHeadPoseDelay()));
         }
-//Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
+        //Logger.getGlobal().info("Frame loading: "+(System.currentTimeMillis()-start));
         return animation;
     }
 

@@ -100,6 +100,8 @@ public class VirtualEntityFactory {
 
     private org.bukkit.entity.Entity dependingEntity;
 
+    private boolean copyOriginalProjectile;
+
     public VirtualEntityFactory(McmeEntityType type, Location location) {
         //uniqueId = UuidGenerator.fast_random();//getRandomV2();
         this.type = type;
@@ -230,6 +232,15 @@ public class VirtualEntityFactory {
     public VirtualEntityFactory withLocation(Location location) {
         this.location = location;
         spawnLocationEntity = null;
+        return this;
+    }
+
+    public boolean isCopyOriginalProjectile() {
+        return copyOriginalProjectile;
+    }
+
+    public VirtualEntityFactory withCopyOriginalProjectile(boolean copyOriginalProjectile) {
+        this.copyOriginalProjectile = copyOriginalProjectile;
         return this;
     }
 

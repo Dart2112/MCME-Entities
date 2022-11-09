@@ -300,6 +300,11 @@ public class Bone implements McmeEntity {
     }
 
     @Override
+    public Vector getHeadPosition() {
+        return new Vector(0,0,0);
+    }
+
+    @Override
     public void setRotation(float yaw, float pitch, float roll) {
 
     }

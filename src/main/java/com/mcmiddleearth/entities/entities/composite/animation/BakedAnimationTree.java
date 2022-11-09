@@ -219,6 +219,4 @@ public class BakedAnimationTree {
         children.forEach((key, child) -> result.addAll(child.getAnimationKeys()));
         return result.stream().sorted().collect(Collectors.toList());
     }
-
-
 }

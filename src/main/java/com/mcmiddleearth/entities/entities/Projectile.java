@@ -17,6 +17,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Collection;
 import java.util.Random;
+import java.util.logging.Logger;
 
 public class Projectile extends SimpleNonLivingEntity {
 
@@ -31,6 +32,8 @@ public class Projectile extends SimpleNonLivingEntity {
     private final float damage, knockBack;
 
     private static final Random random = new Random();
+
+    private final boolean copyOriginalEntity;
 
     public Projectile(int entityId, VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
         super(entityId, factory);
@@ -48,13 +51,14 @@ public class Projectile extends SimpleNonLivingEntity {
         this.shooter = factory.getShooter();
         this.damage = factory.getProjectileDamage();
         this.knockBack = factory.getKnockBackBase();
+        this.copyOriginalEntity = factory.isCopyOriginalProjectile();
     }
 
     @Override
     public void doTick() {
         if(!onGround) {
             spawnPacket.update();
-            Vector velocity = getVelocity().clone();//
+            Vector velocity = getVelocity().clone();
             //Logger.getGlobal().info("FALLING: "+velocity);
             double speed = velocity.length();
             int steps = (int)(speed / 0.1)+1;
@@ -63,7 +67,6 @@ public class Projectile extends SimpleNonLivingEntity {
                 setLocation(getLocation().clone().add(stepVelocity));
                 McmeEntity collision = checkEntityCollisions();
                 if (collision != null && collision != shooter) {
-//Logger.getGlobal().info("Hit! Shooter: "+shooter);
                     getLocation().getWorld().spawnParticle(Particle.SPELL_INSTANT, getLocation(), 1, 0, 0, 0,
                             2, null, true);
                     collision.receiveAttack(shooter, damage, knockBack);
@@ -74,7 +77,6 @@ public class Projectile extends SimpleNonLivingEntity {
                     break;
                 }
                 if (movementEngine.cannotMove(stepVelocity)) {
-//Logger.getGlobal().info("Block!");
                     onGround = true;
                     new BukkitRunnable() {
                         @Override
@@ -85,9 +87,14 @@ public class Projectile extends SimpleNonLivingEntity {
                     }.runTaskLater(EntitiesPlugin.getInstance(), 400);
                     break;
                 }
-//Logger.getGlobal().info("location new: " + getLocation().getX() + " " + getLocation().getY() + " " + getLocation().getZ());
             }
-            setVelocity(velocity.multiply(0.99f).add(gravity));
+            if(!copyOriginalEntity){
+                setVelocity(velocity.multiply(0.99f).add(gravity));
+            }
+            else {
+                setVelocity(getDependingEntity().getVelocity());
+                setLocation(getDependingEntity().getLocation());
+            }
         }
     }
 

@@ -11,31 +11,14 @@ import com.mcmiddleearth.entities.entities.composite.animation.AnimationJob;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimation;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationTree;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationType;
+import com.mcmiddleearth.entities.entities.composite.bones.Bone;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationChangeEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationSetEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityStateChangedEvent;
 import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
-import net.kyori.adventure.text.Component;
 import org.bukkit.*;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.PistonMoveReaction;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Pose;
-import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.util.BoundingBox;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.rmi.runtime.Log;
+import org.bukkit.util.Vector;
 
 import java.io.*;
 import java.util.*;
@@ -43,8 +26,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class BakedAnimationEntity extends CompositeEntity {
-
-    //private final Map<String, BakedAnimation> animations = new HashMap<>();
 
     private final BakedAnimationTree animationTree = new BakedAnimationTree(null);
 
@@ -70,33 +51,33 @@ public class BakedAnimationEntity extends CompositeEntity {
     public BakedAnimationEntity(int entityId, VirtualEntityFactory factory,
                                 RotationMode rotationMode) throws InvalidLocationException, InvalidDataException {
         super(entityId, factory, rotationMode);
-//Logger.getGlobal().info("Baked Animation Get location "+getLocation());
+        //Logger.getGlobal().info("Baked Animation Get location "+getLocation());
         manualAnimationControl = factory.getManualAnimationControl();
-//Logger.getGlobal().info("Manual animation: "+manualAnimationControl);
+        //Logger.getGlobal().info("Manual animation: "+manualAnimationControl);
         movementSpeedAnimation = getMovementSpeed();
         animationFileName = factory.getDataFile();
         File animationFile = new File(EntitiesPlugin.getAnimationFolder(), animationFileName+".json");
         try (FileReader reader = new FileReader(animationFile)) {
-//long start = System.currentTimeMillis();
+            //long start = System.currentTimeMillis();
             JsonObject data = new JsonParser().parse(reader).getAsJsonObject();
-//Logger.getGlobal().info("File loading: "+(System.currentTimeMillis()-start));
+            //Logger.getGlobal().info("File loading: "+(System.currentTimeMillis()-start));
             JsonObject modelData = data.get("model").getAsJsonObject();
             Material itemMaterial = Material.valueOf(modelData.get("head_item").getAsString().toUpperCase());
             JsonObject animationData = data.get("animations").getAsJsonObject();
-//start = System.currentTimeMillis();
+            //start = System.currentTimeMillis();
             animationData.entrySet().forEach(entry -> {
                 String[] split;
                 if(entry.getKey().contains(factory.getDataFile()+".")) {
                     split = entry.getKey().split(factory.getDataFile() + "\\.");
                 } else {
                     split = entry.getKey().split("animations\\.");
-//Logger.getGlobal().info("Length: "+split.length);
+                    //Logger.getGlobal().info("Length: "+split.length);
                 }
                 String animationKey;
                 if(split.length>1) {
                     animationKey = split[1];
                 } else {
-//Logger.getGlobal().info("DataFile: "+factory.getDataFile());
+                    //Logger.getGlobal().info("DataFile: "+factory.getDataFile());
                     animationKey = entry.getKey();
                 }
                 String animationName = animationKey;
@@ -108,74 +89,78 @@ public class BakedAnimationEntity extends CompositeEntity {
                         animationName = animationName.substring(0, lastDot);
                     }
                 }
-//Logger.getGlobal().info("AnimationKey: "+animationKey);
+                //Logger.getGlobal().info("AnimationKey: "+animationKey);
                 animationTree.addAnimation(animationName, BakedAnimation.loadAnimation(entry.getValue().getAsJsonObject(),
                         itemMaterial, this, animationKey, animationName));
             });
-//Logger.getGlobal().info("Animation loading: "+(System.currentTimeMillis()-start));
+            //Logger.getGlobal().info("Animation loading: "+(System.currentTimeMillis()-start));
         } catch (IOException | JsonParseException | IllegalStateException e) {
             throw new InvalidDataException("Data file '"+factory.getDataFile()+"' doesn't exist or does not contain valid animation data.");
         }
-//animationTree.debug();
+        //animationTree.debug();
         createPackets();
     }
 
     public static List<String> getDataFiles() {
-        return Arrays.stream(EntitiesPlugin.getAnimationFolder().listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".json");
-            }
-        })).map(file -> file.getName().substring(0,file.getName().lastIndexOf('.'))).collect(Collectors.toList());
+        return Arrays.stream(Objects.requireNonNull(EntitiesPlugin.getAnimationFolder().listFiles(
+                (dir, name) -> name.endsWith(".json"))))
+                               .map(file -> file.getName().substring(0,file.getName().lastIndexOf('.')))
+                               .collect(Collectors.toList());
     }
 
     @Override
     public void doTick() {
-//Logger.getGlobal().info("Movementspeed: "+getMovementSpeed());
-        if(movementSpeedAnimation.equals(MovementSpeed.STAND) && !getMovementSpeed().equals(MovementSpeed.STAND)) {
-            startMovementCounter++;
-            if(startMovementCounter>0) {
-                movementSpeedAnimation = getMovementSpeed();
-                startMovementCounter = 0;
-            }
-        } else if(getMovementSpeed().equals(MovementSpeed.STAND) && !movementSpeedAnimation.equals(MovementSpeed.STAND)) {
+        //Logger.getGlobal().info("Movementspeed: "+getMovementSpeed());
+        //Logger.getGlobal().info("Movementtype: "+getMovementType());
+
+        /*if(movementSpeedAnimation.equals(MovementSpeed.STAND) && !getMovementSpeed().equals(MovementSpeed.STAND)) { // When beginning movement
+            movementSpeedAnimation = getMovementSpeed();
+
+        } else if(getMovementSpeed().equals(MovementSpeed.STAND) && !movementSpeedAnimation.equals(MovementSpeed.STAND)) { // When stopping movement
             stopMovementCounter++;
-            if(stopMovementCounter>3) {
+            if(stopMovementCounter>3) { // What is the point of having this timer??
                 movementSpeedAnimation = getMovementSpeed();
                 stopMovementCounter = 0;
             }
-        } else {
-            startMovementCounter = 0;
-            stopMovementCounter = 0;
-            if(!getMovementSpeed().equals(movementSpeedAnimation)) {
-                movementSpeedAnimation = getMovementSpeed();
-            }
+        } else {*/
+        //startMovementCounter = 0;
+        //stopMovementCounter = 0;
+
+        // movementSpeedAnimation and getMovementSpeed are essentially identical? What is the difference? Why can't we get rid of movementSpeedAnimation
+
+        if(!getMovementSpeed().equals(movementSpeedAnimation)) {
+            movementSpeedAnimation = getMovementSpeed();
         }
+        //}
+
+        // Automatic animation control
         if(!manualAnimationControl) {
-            AnimationJob expected = new AnimationJob(animationTree.getAnimation(this),null,0);
-//Logger.getGlobal().info("Expected: "+(expected == null?"none":expected.getName()));
+            // Get the expected animation based on speed and action
+            AnimationJob expected = new AnimationJob(animationTree.getAnimation(this),null,0); // TODO: Why is this being created every tick???
+
+            // If we find the expected animation
             if(expected.getAnimation() != null
-                    && (
-                            currentAnimation == null
-                            || currentAnimation.getAnimation() == null
-                            // If current animation is at the last frame, allow switching to another random animation
-                            || currentAnimation.getAnimation().isAtLastFrame()
-                            // And always switch if we're trying to switch to a completely different animation
-                            || !expected.getAnimation().getAnimationName().equals(currentAnimation.getAnimation().getAnimationName())
-                    )) {
-//Logger.getGlobal().info("Switch from: "+(currentAnimation == null?"none":currentAnimation.getName()));
-                if(!manualOverride && instantAnimationSwitching
-                                   && callAnimationChangeEvent(currentAnimation,expected)) {
+                && (
+                        currentAnimation == null
+                        || currentAnimation.getAnimation() == null
+                        // If current animation is at the last frame, allow switching to another random animation
+                        || currentAnimation.getAnimation().isAtLastFrame()
+                        // And always switch if we're trying to switch to a completely different animation
+                        || !expected.getAnimation().getAnimationName().equals(currentAnimation.getAnimation().getAnimationName())
+                )) {
+                if(!manualOverride && instantAnimationSwitching && callAnimationChangeEvent(currentAnimation,expected)) {
+
                     currentAnimation = expected;
-//Logger.getGlobal().info("Animation switch instant: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
-                    if (currentAnimation.getAnimation() != null)
+
+                    if (currentAnimation.getAnimation() != null){
                         currentAnimation.getAnimation().reset();
+                    }
                 } else { //if(!manualOverride){
                     nextAnimation = expected;
-//Logger.getGlobal().info("Next Animation switch non-instant: "+(nextAnimation!=null?nextAnimation.getName():"nulll"));
                 }
             }
         }
+
         if(currentAnimation!=null) {
             if (currentAnimation.getAnimation().isFinished() || currentAnimation.getAnimation().isAtLastFrame()) {
                 if (currentAnimation.getAnimation().getType().equals(BakedAnimationType.CHAIN)) {
@@ -183,7 +168,7 @@ public class BakedAnimationEntity extends CompositeEntity {
                                                      null,0);
                     if(callAnimationChangeEvent(currentAnimation,nextAnim)) {
                         currentAnimation = nextAnim;
-//Logger.getGlobal().info("Animation switch due to Chain: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
+                        //Logger.getGlobal().info("Animation switch due to Chain: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
                         currentAnimation.getAnimation().reset();
                     }
                 } else {
@@ -195,26 +180,26 @@ public class BakedAnimationEntity extends CompositeEntity {
                        || currentAnimation.getAnimation().isFinished())
                     && nextAnimation != null && callAnimationChangeEvent(currentAnimation,nextAnimation)) {
                 currentAnimation = nextAnimation;
-//Logger.getGlobal().info("Animation switch regular: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
+                //Logger.getGlobal().info("Animation switch regular: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
                 currentAnimation.getAnimation().reset();
                 nextAnimation = null;
-//Logger.getGlobal().info("Next Animation switch regular: null");
+                //Logger.getGlobal().info("Next Animation switch regular: null");
             }
-//Logger.getGlobal().info("Cur: "+currentAnimation.getName()+" OR: "+manualOverride+" MC: "+manualAnimationControl);
+            //Logger.getGlobal().info("Cur: "+currentAnimation.getName()+" OR: "+manualOverride+" MC: "+manualAnimationControl);
         } else {
             manualOverride = false;
             if(nextAnimation != null
                                && callAnimationChangeEvent(null,nextAnimation)) {
                 currentAnimation = nextAnimation;
-//Logger.getGlobal().info("Animation switch cause of null: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
+                //Logger.getGlobal().info("Animation switch cause of null: "+(currentAnimation!=null?currentAnimation.getName():"nulll"));
                 currentAnimation.getAnimation().reset();
                 nextAnimation = null;
-//Logger.getGlobal().info("Next Animation switch cause of null: null");
+                //Logger.getGlobal().info("Next Animation switch cause of null: null");
            }
         }
         if(currentAnimation!=null) {
-//Logger.getGlobal().info("Current anim: "+currentAnimation.getName()+" "+currentAnimation.getCurrentFrame()
-//                        +" next: "+(nextAnimation!=null?nextAnimation.getName():"nullnext"));
+            //Logger.getGlobal().info("Current anim: "+currentAnimation.getName()+" "+currentAnimation.getCurrentFrame()
+            //                        +" next: "+(nextAnimation!=null?nextAnimation.getName():"nullnext"));
             currentAnimation.doTick();
         }
         super.doTick();
@@ -227,12 +212,12 @@ public class BakedAnimationEntity extends CompositeEntity {
             this.manualOverride = manualOverride;
             AnimationJob newAnim = new AnimationJob(animationTree.getAnimation(event.getNextAnimationKey()),payload,delay);
             //newAnim.setPayload(payload, delay);
-//Logger.getGlobal().info("New Anim: "+name+" -> "+newAnim);
+            //Logger.getGlobal().info("New Anim: "+name+" -> "+newAnim);
             if(instantAnimationSwitching || manualOverride) {
                 if(callAnimationChangeEvent(currentAnimation, newAnim)) {
                     if (newAnim.getAnimation() != null) {
                         currentAnimation = newAnim;
-//Logger.getGlobal().info("Animation switch cause of manual: "+(currentAnimation!=null?currentAnimation.getAnimation().getName():"nulll"));
+                        //Logger.getGlobal().info("Animation switch cause of manual: "+(currentAnimation!=null?currentAnimation.getAnimation().getName():"nulll"));
                         currentAnimation.getAnimation().reset();
                     } else {
                         currentAnimation = null;
@@ -281,12 +266,12 @@ public class BakedAnimationEntity extends CompositeEntity {
     }
 
     public void setAnimationFrame(String animation, int frameIndex) {
-//Logger.getGlobal().info("set Animation Frame "+animation + " "+ frameIndex);
+        //Logger.getGlobal().info("set Animation Frame "+animation + " "+ frameIndex);
         manualOverride = true;
         currentAnimation = null;
         BakedAnimation anim = animationTree.getAnimation(animation);
         if (anim != null) {
-//Logger.getGlobal().info("Apply Frame: "+ anim);
+            //Logger.getGlobal().info("Apply Frame: "+ anim);
             anim.applyFrame(frameIndex);
         }
     }

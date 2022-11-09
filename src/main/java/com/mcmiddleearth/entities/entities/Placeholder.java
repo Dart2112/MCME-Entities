@@ -125,6 +125,11 @@ public class Placeholder implements McmeEntity {
     }
 
     @Override
+    public Vector getHeadPosition() {
+        return null;
+    }
+
+    @Override
     public void setRotation(float yaw) {
 
     }

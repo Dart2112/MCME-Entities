@@ -72,6 +72,8 @@ public interface McmeEntity extends Entity, InventoryHolder {
     float getHeadYaw();
     float getHeadPitch();
 
+    Vector getHeadPosition();
+
     void setRotation(float yaw);
 
     void setRotation(float yaw, float pitch, float roll);

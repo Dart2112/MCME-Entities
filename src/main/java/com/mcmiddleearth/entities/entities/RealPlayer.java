@@ -390,6 +390,11 @@ public class RealPlayer extends BukkitCommandSender implements McmeEntity {
     }
 
     @Override
+    public Vector getHeadPosition() {
+        return getBukkitPlayer().getEyeLocation().toVector();
+    }
+
+    @Override
     public void setRotation(float yaw, float pitch, float roll) {
 
     }

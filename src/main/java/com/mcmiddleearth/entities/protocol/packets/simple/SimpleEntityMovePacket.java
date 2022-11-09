@@ -46,9 +46,9 @@ public class SimpleEntityMovePacket extends AbstractPacket {
             case MOVE:
                 Vector dir = getShift();
                 move.getShorts()
-                        .write(0, (short) dir.getBlockX())
-                        .write(1, (short) dir.getBlockY())
-                        .write(2, (short) dir.getBlockZ());
+                        .write(0, (short) (dir.getBlockX() > 0 ? Math.min(dir.getBlockX(),32767) : Math.max(dir.getBlockX(),-32768)))
+                        .write(1, (short) (dir.getBlockY() > 0 ? Math.min(dir.getBlockY(),32767) : Math.max(dir.getBlockY(),-32768)))
+                        .write(2, (short) (dir.getBlockZ() > 0 ? Math.min(dir.getBlockZ(),32767) : Math.max(dir.getBlockZ(),-32768)));
                 move.getBooleans().write(0,entity.onGround());
                 break;
             /*case LOOK:
@@ -67,9 +67,9 @@ public class SimpleEntityMovePacket extends AbstractPacket {
                 byte pitch = getAngle(entity.getHeadPitch());
 //Logger.getGlobal().info("write packet: "+yaw+" "+pitch+" head: "+getAngle(entity.getLocation().getYaw()));
                 moveLook.getShorts()
-                        .write(0, (short) dir.getBlockX())
-                        .write(1, (short) dir.getBlockY())
-                        .write(2, (short) dir.getBlockZ());
+                        .write(0, (short) (dir.getBlockX() > 0 ? Math.min(dir.getBlockX(),32767) : Math.max(dir.getBlockX(),-32768)))
+                        .write(1, (short) (dir.getBlockY() > 0 ? Math.min(dir.getBlockY(),32767) : Math.max(dir.getBlockY(),-32768)))
+                        .write(2, (short) (dir.getBlockZ() > 0 ? Math.min(dir.getBlockZ(),32767) : Math.max(dir.getBlockZ(),-32768)));
                 moveLook.getBytes()
                         .write(0, yaw)
                         .write(1, pitch);

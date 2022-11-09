@@ -101,8 +101,16 @@
         <dependency>
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-bukkit</artifactId>
-            <version>7.0.0</version>
-            <scope>provided</scope>
+            <version>7.2.12</version>
+            <systemPath>${basedir}/dependencies/worldedit-bukkit-7.2.12.jar</systemPath>
+            <scope>system</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-core</artifactId>
+            <version>7.2.12</version>
+            <systemPath>${basedir}/dependencies/worldedit-core-7.2.12.jar</systemPath>
+            <scope>system</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.bstats</groupId>

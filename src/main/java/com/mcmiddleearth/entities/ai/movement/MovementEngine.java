@@ -11,6 +11,7 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
+import java.util.logging.Logger;
 
 public class MovementEngine {
 

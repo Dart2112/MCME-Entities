@@ -26,5 +26,6 @@ public enum GoalType {
     MIMIC,
     JOCKEY,
     RIDING_PLAYER,
+    DEFINED_LOCATION,
     NONE
 }

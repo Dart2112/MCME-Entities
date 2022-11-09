@@ -21,7 +21,7 @@ public class ProjectileSpawnPacket extends AbstractPacket {
                 .write(1, (int) (velo.getX() * 8000)) //veo
                 .write(2, (int) (velo.getY() * 8000))
                 .write(3, (int) (velo.getZ() * 8000))
-                .write(6, shooter.getEntityId() + 1); // object data
+                .write(6, shooter != null ? shooter.getEntityId() + 1 : 0); // object data
 ///Logger.getGlobal().info("Spawn eid: "+entity.getEntityId());
 //Logger.getGlobal().info("id "+shooter.getEntityId()+" Velo: "+velo.getX()+" "+velo.getY()+" "+velo.getZ());
 //Logger.getGlobal().info("Type "+entity.getType().getBukkitEntityType());

@@ -77,7 +77,7 @@ public abstract class GoalLocationTarget extends GoalPath {
         if((getEntity() instanceof WingedFlightEntity)
                 && (getEntity().getMovementType().equals(MovementType.FLYING)
                 || getEntity().getMovementType().equals(MovementType.GLIDING))) {
-            return distance < distanceSquared * 400;
+            return distance < distanceSquared * 900; // Normal is 0.01,
         } else {
             return distance < distanceSquared;
         }
