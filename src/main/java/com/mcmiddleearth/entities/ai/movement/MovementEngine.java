@@ -79,7 +79,7 @@ public class MovementEngine {
                         velocity.setY(-groundDistance);
                         double fallHeight = fallStart - (entity.getEntityBoundingBox().getMin().getY()-groundDistance);
 //Logger.getGlobal().info("Fall Damage?: "+fallStart +" entity y: "+entity.getBoundingBox().getMin().getY()+" ground Dist: "+ groundDistance+" fallHeight: "+fallHeight+" "+entity.getFallDepth());
-                        if(fallHeight>entity.getFallDepth()+0.5) {
+                        if(EntitiesPlugin.getEntityServer().isFallDamage() && fallHeight>entity.getFallDepth()+0.5) {
                             entity.damage((int) (fallHeight - entity.getFallDepth()));
                         }
                         if(entity.isSneaking()) {
