@@ -1,8 +1,6 @@
 package com.mcmiddleearth.entities.entities.composite;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.mcmiddleearth.entities.EntitiesPlugin;
 import com.mcmiddleearth.entities.api.ActionType;
 import com.mcmiddleearth.entities.api.MovementSpeed;
@@ -12,20 +10,25 @@ import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimation;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationTree;
 import com.mcmiddleearth.entities.entities.composite.animation.BakedAnimationType;
 import com.mcmiddleearth.entities.entities.composite.bones.Bone;
+import com.mcmiddleearth.entities.entities.composite.collision.BoneAttachedCollider;
+import com.mcmiddleearth.entities.entities.composite.collision.CollisionEntity;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationChangeEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityAnimationSetEvent;
 import com.mcmiddleearth.entities.events.events.virtual.composite.BakedAnimationEntityStateChangedEvent;
 import com.mcmiddleearth.entities.exception.InvalidDataException;
 import com.mcmiddleearth.entities.exception.InvalidLocationException;
-import org.bukkit.*;
+import org.bukkit.Material;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class BakedAnimationEntity extends CompositeEntity {
+public class BakedAnimationEntity extends CompositeEntity implements CollisionEntity {
 
     private final BakedAnimationTree animationTree = new BakedAnimationTree(null);
 
@@ -43,6 +46,9 @@ public class BakedAnimationEntity extends CompositeEntity {
     private final String animationFileName;
 
     protected boolean instantAnimationSwitching = true;
+
+    protected BoundingBox colliderBoundingBox = new BoundingBox();
+    protected List<BoneAttachedCollider> colliders = new ArrayList<>();
 
     public BakedAnimationEntity(int entityId, VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
         this(entityId,factory,RotationMode.YAW);
@@ -93,6 +99,8 @@ public class BakedAnimationEntity extends CompositeEntity {
                 animationTree.addAnimation(animationName, BakedAnimation.loadAnimation(entry.getValue().getAsJsonObject(),
                         itemMaterial, this, animationKey, animationName));
             });
+
+            loadColliders(data);
             //Logger.getGlobal().info("Animation loading: "+(System.currentTimeMillis()-start));
         } catch (IOException | JsonParseException | IllegalStateException e) {
             throw new InvalidDataException("Data file '"+factory.getDataFile()+"' doesn't exist or does not contain valid animation data.");
@@ -106,6 +114,26 @@ public class BakedAnimationEntity extends CompositeEntity {
                 (dir, name) -> name.endsWith(".json"))))
                                .map(file -> file.getName().substring(0,file.getName().lastIndexOf('.')))
                                .collect(Collectors.toList());
+    }
+
+    private void loadColliders(JsonObject data) {
+        JsonArray collidersData = data.getAsJsonArray("colliders");
+        if (collidersData == null) return;
+
+        for (JsonElement colliderDataElement : collidersData) {
+            JsonObject colliderData = colliderDataElement.getAsJsonObject();
+
+            String boneName = colliderData.get("bone").getAsString();
+            Bone bone = getBones().stream().filter(boneCandidate -> boneName.equals(boneCandidate.getName())).findFirst().orElse(null);
+            Vector size = readVector(colliderData.get("size").getAsJsonArray());
+            Vector offset = readVector(colliderData.get("offset").getAsJsonArray());
+
+            this.colliders.add(new BoneAttachedCollider(bone, offset, size));
+        }
+    }
+
+    private static org.bukkit.util.Vector readVector(JsonArray data) {
+        return new Vector(data.get(0).getAsDouble(), data.get(1).getAsDouble(), data.get(2).getAsDouble());
     }
 
     @Override
@@ -312,4 +340,24 @@ public class BakedAnimationEntity extends CompositeEntity {
         return factory;
     }
 
+    @Override
+    public Stream<BoundingBox> getColliders() {
+        return colliders.stream().map(BoneAttachedCollider::getBoundingBox);
+    }
+
+    @Override
+    public BoundingBox getCollisionBoundingBox() {
+        return colliderBoundingBox;
+    }
+
+    @Override
+    public void updateColliders() {
+        colliderBoundingBox.resize(0, 0, 0, 0, 0, 0);
+
+        for (BoneAttachedCollider collider : colliders) {
+            collider.update();
+
+            colliderBoundingBox.union(collider.getBoundingBox());
+        }
+    }
 }
