@@ -195,7 +195,7 @@ public class BakedAnimationEntity extends CompositeEntity {
                 currentAnimation.getAnimation().reset();
                 nextAnimation = null;
                 //Logger.getGlobal().info("Next Animation switch cause of null: null");
-           }
+            }
         }
         if(currentAnimation!=null) {
             //Logger.getGlobal().info("Current anim: "+currentAnimation.getName()+" "+currentAnimation.getCurrentFrame()
@@ -206,6 +206,9 @@ public class BakedAnimationEntity extends CompositeEntity {
     }
 
     public void setAnimation(String name, boolean manualOverride, Payload payload, int delay) {
+        if(manualAnimationControl && !manualOverride) {
+            return;
+        }
         BakedAnimationEntityAnimationSetEvent event = new BakedAnimationEntityAnimationSetEvent(this, name);
         EntitiesPlugin.getEntityServer().handleEvent(event);
         if(!event.isCancelled()) {
@@ -230,11 +233,11 @@ public class BakedAnimationEntity extends CompositeEntity {
     }
 
     @Override
-    public void playAnimation(ActionType type, Payload payload, int delay) {
+    public void playAnimation(ActionType type, boolean manualOverride, Payload payload, int delay) {
         setAnimation(this.getMovementType().name().toLowerCase()
                         +"."+this.getMovementSpeed().name().toLowerCase()
                         +"."+type.name().toLowerCase(),
-                    true, payload, delay);
+                    manualOverride, payload, delay);
     }
 
     private boolean callAnimationChangeEvent(AnimationJob current, AnimationJob next) {
