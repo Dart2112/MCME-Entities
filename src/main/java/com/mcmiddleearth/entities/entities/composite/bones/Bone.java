@@ -25,6 +25,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -483,5 +484,8 @@ public class Bone implements McmeEntity {
         throw new UnsupportedOperationException();
     }
 
-
+    @Override
+    public Set<String> getTagList() {
+        return Collections.emptySet();
+    }
 }

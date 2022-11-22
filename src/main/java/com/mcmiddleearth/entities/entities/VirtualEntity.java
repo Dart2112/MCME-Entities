@@ -66,6 +66,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
     protected int tickCounter = 0;
 
     protected AbstractPacket spawnPacket;
+    protected boolean spawnPacketDirty = true;
     protected AbstractPacket removePacket;
     protected AbstractPacket teleportPacket;
     protected AbstractPacket movePacket;
@@ -125,6 +126,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     private org.bukkit.entity.Entity dependingEntity;
 
+    private final Set<String> tags = new HashSet<>();
+
     public VirtualEntity(VirtualEntityFactory factory) throws InvalidLocationException, InvalidDataException {
         this.updateInterval = factory.getUpdateInterval();
         this.updateRandom = new Random().nextInt(updateInterval);
@@ -163,6 +166,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         this.knockBackPerDamage = factory.getKnockBackPerDamage();
         this.enemies = (factory.getEnemies() != null ? factory.getEnemies() : new HashSet<>());
         this.sitPoint = factory.getSitPoint();
+        this.tags.addAll(factory.getTags());
         this.saddle = factory.getSaddlePoint();
         if (factory.getGoalFactory() != null) {
             this.goal = factory.getGoalFactory().build(this);
@@ -243,24 +247,26 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         lookUpdate = false;
         rotationUpdate = false;
 
-        spawnPacket.update();
+        spawnPacketDirty = true;
     }
 
     public void move() {
         location = location.add(velocity);
         boundingBox.setLocation(location);
 
-        if ((tickCounter % updateInterval == updateRandom)) {
-            teleportPacket.update();
-            teleportPacket.send(viewers);
-        } else {
-            movePacket.update();
-            movePacket.send(viewers);
+        if (hasViewers()) {
+            if ((tickCounter % updateInterval == updateRandom)) {
+                teleportPacket.update();
+                teleportPacket.send(viewers);
+            } else {
+                movePacket.update();
+                movePacket.send(viewers);
+            }
+            lookUpdate = false;
+            rotationUpdate = false;
         }
-        lookUpdate = false;
-        rotationUpdate = false;
 
-        spawnPacket.update();
+        spawnPacketDirty = true;
     }
 
     @Override
@@ -440,6 +446,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         return viewers.contains(player);
     }
 
+    public boolean hasViewers() {
+        return viewers.size() > 0;
+    }
+
     public Set<Player> getViewers() {
         return viewers;
     }
@@ -449,6 +459,10 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         if (!useWhitelistAsBlacklist && !(whiteList.isEmpty() || whiteList.contains(player.getUniqueId()))
                 || useWhitelistAsBlacklist && whiteList.contains(player.getUniqueId())) {
             return;
+        }
+        if (spawnPacketDirty) {
+            spawnPacket.update();
+            spawnPacketDirty = false;
         }
         spawnPacket.send(player);
         viewers.add(player);
@@ -866,6 +880,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Set<String> getTagList() {
+        return tags;
+    }
+
     public VirtualEntityFactory getFactory() {
         VirtualEntityFactory factory = new VirtualEntityFactory(type, location, useWhitelistAsBlacklist, uniqueId, name, attributes)
                 .withBoundingBox(boundingBox)
@@ -887,7 +906,8 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                 .withSubtitleLayout(subtitleLayout)
                 .withSitPoint(sitPoint)
                 .withSaddlePoint(saddle)
-                .withAttackDelay(attackDelay);
+                .withAttackDelay(attackDelay)
+                .withTags(tags);
         if (goal != null) {
             factory.withGoalFactory(goal.getFactory());
         }
