@@ -68,4 +68,8 @@ public interface EntityServer {
     void removePlayer(Player player);
 
     long getCurrentTick();
+
+    void setFallDamage(boolean enabled);
+
+    boolean isFallDamage();
 }

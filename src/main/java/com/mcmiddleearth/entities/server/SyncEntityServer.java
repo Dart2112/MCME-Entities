@@ -47,6 +47,8 @@ public class SyncEntityServer implements EntityServer {
 
     private int lastEntityId = 100000;
 
+    private boolean fallDamage = true;
+
     //private int viewDistance = 20;
 
     private final Map<Class<? extends McmeEntityEvent>, List<McmeEntityEventHandler>> eventHandlers = new HashMap<>();
@@ -409,5 +411,15 @@ public class SyncEntityServer implements EntityServer {
 
     public long getCurrentTick() {
         return System.currentTimeMillis()/50;// Bukkit.getCurrentTick();
+    }
+
+    @Override
+    public boolean isFallDamage() {
+        return fallDamage;
+    }
+
+    @Override
+    public void setFallDamage(boolean fallDamage) {
+        this.fallDamage = fallDamage;
     }
 }

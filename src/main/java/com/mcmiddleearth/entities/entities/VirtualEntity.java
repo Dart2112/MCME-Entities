@@ -525,9 +525,9 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
             if (health <= 0) {
                 EntitiesPlugin.getEntityServer().handleEvent(new McmeEntityDeathEvent(this));
                 dead = true;
-                playAnimation(ActionType.DEATH);
+                playAnimation(ActionType.DEATH, false, new Payload(){public void execute(){}},0);
             } else {
-                playAnimation(ActionType.HURT);
+                playAnimation(ActionType.HURT, false, new Payload(){public void execute(){}},0);
             }
         }
     }
@@ -599,7 +599,7 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
                     }
                 };
                 if (animate) {
-                    playAnimation(ActionType.ATTACK, attack, attackDelay);
+                    playAnimation(ActionType.ATTACK, false, attack, attackDelay);
                 } else {
                     attack.execute();
                 }
@@ -681,11 +681,11 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     @Override
     public void playAnimation(ActionType type) {
-        this.playAnimation(type, () -> {
+        this.playAnimation(type, true, () -> {
         }, 0);
     }
 
-    public void playAnimation(ActionType type, Payload payload, int delay) {
+    public void playAnimation(ActionType type, boolean manualOverride, Payload payload, int delay) {
     }
 
     public void setDisplayName(String displayName) {
