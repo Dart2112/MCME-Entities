@@ -253,17 +253,15 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
         location = location.add(velocity);
         boundingBox.setLocation(location);
 
-        if (hasViewers()) {
-            if ((tickCounter % updateInterval == updateRandom)) {
-                teleportPacket.update();
-                teleportPacket.send(viewers);
-            } else {
-                movePacket.update();
-                movePacket.send(viewers);
-            }
-            lookUpdate = false;
-            rotationUpdate = false;
+        if((tickCounter % updateInterval == updateRandom)) {
+            teleportPacket.update();
+            teleportPacket.send(viewers);
+        } else {
+            movePacket.update();
+            movePacket.send(viewers);
         }
+        lookUpdate = false;
+        rotationUpdate = false;
 
         spawnPacket.update();
     }
@@ -443,10 +441,6 @@ public abstract class VirtualEntity implements McmeEntity, Attributable {
 
     public boolean isViewer(Player player) {
         return viewers.contains(player);
-    }
-
-    public boolean hasViewers() {
-        return viewers.size() > 0;
     }
 
     public Set<Player> getViewers() {
