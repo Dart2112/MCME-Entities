@@ -82,7 +82,7 @@ public class RealPlayer extends BukkitCommandSender implements McmeEntity {
 
     @Override
     public void setVelocity(Vector velocity) {
-
+        getBukkitPlayer().setVelocity(velocity);
     }
 
     @Override
