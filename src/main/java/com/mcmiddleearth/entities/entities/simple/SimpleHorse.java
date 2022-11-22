@@ -27,7 +27,7 @@ public class SimpleHorse extends SimpleLivingEntity {
         saddled = isSaddled;
         ((SimpleHorseMetadataPacket)metadataPacket).setSaddled(isSaddled);
         metadataPacket.update();
-        spawnPacketDirty = true;
+        spawnPacket.update();
         getViewers().forEach(viewer->metadataPacket.send(viewer));
     }
 
