@@ -3,6 +3,7 @@ package com.mcmiddleearth.entities.ai.goal;
 import com.mcmiddleearth.entities.EntitiesPlugin;
 import com.mcmiddleearth.entities.ai.goal.head.HeadGoalMimic;
 import com.mcmiddleearth.entities.api.MovementSpeed;
+import com.mcmiddleearth.entities.api.MovementType;
 import com.mcmiddleearth.entities.api.VirtualEntityGoalFactory;
 import com.mcmiddleearth.entities.entities.McmeEntity;
 import com.mcmiddleearth.entities.entities.VirtualEntity;
@@ -107,6 +108,11 @@ public class GoalMimic extends GoalVirtualEntity {
         //getEntity().setLocation(mimic.getLocation());
         setYaw(bodyYaw);
         velocity = mimic.getLocation().clone().subtract(getEntity().getLocation()).toVector();
+
+        // NKH HP: Force mimicked entities to upright to:
+        // a) avoid getting stuck in falling state, and
+        // b) always use upright animations as they're the only ones available
+        getEntity().setMovementType(MovementType.UPRIGHT);
     }
 
     public boolean isDirectMovementControl() {
