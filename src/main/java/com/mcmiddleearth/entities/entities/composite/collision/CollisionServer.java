@@ -6,8 +6,6 @@ import com.mcmiddleearth.entities.provider.PlayerProvider;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.*;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -103,50 +101,55 @@ public class CollisionServer {
     }
 
     private void onCollision(CollisionEntity target, Entity attacker) {
-        if (target instanceof LivingEntity) {
-            LivingEntity livingEntity = (LivingEntity) target;
+        // TODO: handle other types of projectile entities
+        boolean targetIsMcmeEntity = target instanceof McmeEntity;
+        boolean targetIsDamageable = target instanceof Damageable;
 
-            double damage = 1.0;
-            double knockbackStrength = 1.0;
+        // Only some entities are capable of receiving damage
+        if (targetIsMcmeEntity || targetIsDamageable) {
+            double damage = -1d;
+            double knockbackStrength = -1d;
             Entity realAttacker = attacker;
+
+            if (attacker instanceof Projectile) {
+                Projectile projectile = (Projectile) attacker;
+
+                if (projectile.getShooter() instanceof Player) {
+                    realAttacker = (Player) projectile.getShooter();
+                }
+            }
 
             if (attacker instanceof AbstractArrow) {
                 AbstractArrow arrow = (AbstractArrow) attacker;
 
                 damage = arrow.getDamage();
                 knockbackStrength = arrow.getKnockbackStrength();
-                if (arrow.getShooter() instanceof Player) {
-                    realAttacker = ((Player) arrow.getShooter());
-                }
-            } else if (attacker instanceof LivingEntity) {
-                AttributeInstance attackDamageAttribute = ((LivingEntity) attacker).getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-                if (attackDamageAttribute != null) {
-                    damage = attackDamageAttribute.getValue();
-                }
-
-                AttributeInstance attackKnockbackAttribute = ((LivingEntity) attacker).getAttribute(Attribute.GENERIC_ATTACK_KNOCKBACK);
-                if (attackKnockbackAttribute != null) {
-                    knockbackStrength = attackKnockbackAttribute.getValue();
-                }
+            } else if (attacker instanceof Snowball) {
+                // TODO: damage blaze targets
+                damage = 0d;
+                knockbackStrength = 1d;
             }
 
-            if (target instanceof McmeEntity) {
-                McmeEntity mcmeEntity = (McmeEntity) target;
+            if (damage >= 0d) {
+                if (targetIsMcmeEntity) {
+                    McmeEntity mcmeEntity = (McmeEntity) target;
 
-                if (realAttacker instanceof Player) {
-                    // Special case to allow setting enemies for AI
-                    mcmeEntity.receiveAttack(playerProvider.getOrCreateMcmePlayer((Player) realAttacker), damage, knockbackStrength);
-                } else {
-                    mcmeEntity.receiveAttack(null, damage, knockbackStrength);
+                    if (realAttacker instanceof Player) {
+                        // Special case to allow setting enemies for AI
+                        mcmeEntity.receiveAttack(playerProvider.getOrCreateMcmePlayer((Player) realAttacker), damage, knockbackStrength);
+                    } else {
+                        mcmeEntity.receiveAttack(null, damage, knockbackStrength);
+                    }
+                } else if (targetIsDamageable) {
+                    Damageable damageable = (Damageable) target;
+
+                    // TODO: apply knockback?
+                    damageable.damage(damage);
                 }
-            } else {
-                // TODO: apply knockback?
-                livingEntity.damage(damage);
             }
         }
 
         // Projectiles get destroyed on hit
-        // TODO: handle thrown potions (bukkit API has no method to just apply all their effects immediately...)
         if (attacker instanceof Projectile) {
             attacker.remove();
 

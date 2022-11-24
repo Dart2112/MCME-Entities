@@ -45,6 +45,9 @@ public class BoneAttachedCollider {
             boundingBox.shift(offsetFromBone);
         }
 
+        // Offset to the head pivot point
+        boundingBox.shift(0f, 22f / 16f, 0f);
+
         // Move to current bone position
         boundingBox.shift(boundBone.getRelativePositionRotated());
     }
