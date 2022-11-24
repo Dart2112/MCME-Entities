@@ -55,16 +55,47 @@ public class CollisionServer {
                 // Translate other bounding box to our entity's local space
                 otherBoundingBox.shift(entityOffset);
 
+                // Figure out the step count to ultimately decide if we want to do stepping at all (in which case steps = 1)
+                Vector otherEntityVelocity = otherEntity.getVelocity().clone();
+                double speed = otherEntityVelocity.length();
+                double shortestBoundingBoxEdge = Math.min(Math.min(otherBoundingBox.getWidthX(), otherBoundingBox.getWidthZ()), otherBoundingBox.getHeight());
+                double adjacentStepBoundingBoxOverlap = 0.5d;
+                int steps = (int) Math.ceil(speed / (shortestBoundingBoxEdge * adjacentStepBoundingBoxOverlap));
+                // Ensure we do at least one step even if the other entity is not moving
+                if (steps < 1) steps = 1;
+                Vector stepOffset = new Vector();
+
                 // Do a coarse check first
-                if (!boundingBox.overlaps(otherBoundingBox)) continue;
+                BoundingBox coarseOtherBoundingBox = otherBoundingBox;
 
-                for (Iterator<BoundingBox> it = entity.getColliders().iterator(); it.hasNext(); ) {
-                    BoundingBox entityCollider = it.next();
+                if (steps > 1) {
+                    // Expand the bounding box to cover the current and next location
+                    coarseOtherBoundingBox = coarseOtherBoundingBox.clone().shift(otherEntityVelocity).union(otherBoundingBox);
+                    // Step offset gets negated because it'll be used to move the entity's colliders "into" the other entity, not the other way around
+                    stepOffset.copy(otherEntityVelocity).multiply(-1d / steps);
+                }
 
+                if (!boundingBox.overlaps(coarseOtherBoundingBox)) continue;
+
+                // Do more precise collision checks
+                testOtherEntity: for (Iterator<BoundingBox> it = entity.getColliders().iterator(); it.hasNext(); ) {
+                    BoundingBox entityCollider = it.next().clone();
+
+                    // Unroll loop to avoid unnecessary shifting when there's no extra steps
                     if (entityCollider.overlaps(otherBoundingBox)) {
                         // Collision detected
                         onCollision(entity, otherEntity);
-                        break;
+                        break testOtherEntity;
+                    }
+
+                    for (int step = 1; step < steps; step++) {
+                        entityCollider.shift(stepOffset);
+
+                        if (entityCollider.overlaps(otherBoundingBox)) {
+                            // Collision detected
+                            onCollision(entity, otherEntity);
+                            break testOtherEntity;
+                        }
                     }
                 }
             }
@@ -79,8 +110,8 @@ public class CollisionServer {
             double knockbackStrength = 1.0;
             Entity realAttacker = attacker;
 
-            if (attacker instanceof Arrow) {
-                Arrow arrow = (Arrow) attacker;
+            if (attacker instanceof AbstractArrow) {
+                AbstractArrow arrow = (AbstractArrow) attacker;
 
                 damage = arrow.getDamage();
                 knockbackStrength = arrow.getKnockbackStrength();
@@ -137,8 +168,9 @@ public class CollisionServer {
         switch (entityType) {
             case ARROW:
             case SPECTRAL_ARROW:
-                // Do not collide with arrows which already hit a block.
-                return !((Arrow) entity).isInBlock();
+            case TRIDENT:
+                // Do not collide with arrow-likes which already hit a block.
+                return !((AbstractArrow) entity).isInBlock();
             case SNOWBALL:
                 return true;
             default:
