@@ -79,8 +79,8 @@ public class CollisionServer {
             double knockbackStrength = 1.0;
             Entity realAttacker = attacker;
 
-            if (attacker instanceof Arrow) {
-                Arrow arrow = (Arrow) attacker;
+            if (attacker instanceof AbstractArrow) {
+                AbstractArrow arrow = (AbstractArrow) attacker;
 
                 damage = arrow.getDamage();
                 knockbackStrength = arrow.getKnockbackStrength();
@@ -137,8 +137,9 @@ public class CollisionServer {
         switch (entityType) {
             case ARROW:
             case SPECTRAL_ARROW:
-                // Do not collide with arrows which already hit a block.
-                return !((Arrow) entity).isInBlock();
+            case TRIDENT:
+                // Do not collide with arrow-likes which already hit a block.
+                return !((AbstractArrow) entity).isInBlock();
             case SNOWBALL:
                 return true;
             default:
